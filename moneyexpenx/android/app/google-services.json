@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "241528104479",
+    "project_id": "moneyexpenx",
+    "storage_bucket": "moneyexpenx.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:241528104479:android:da5a73d26658aa01b6572a",
+        "android_client_info": {
+          "package_name": "com.moneyexpenx.moneyexpenx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBraogumS5jGsd0t1O93o6KoBkNCTUB8f8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
