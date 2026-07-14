@@ -290,6 +290,89 @@ class FinanceViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateSavingJar({
+    required String jarID,
+    required String name,
+    required double targetAmt,
+    required DateTime targetDate,
+  }) async {
+    try {
+      final jarIndex = _savingJars.indexWhere((j) => j.jarID == jarID);
+      if (jarIndex != -1) {
+        final jar = _savingJars[jarIndex];
+        final isCompleted = jar.currentAmt >= targetAmt;
+        final updatedJar = jar.copyWith(
+          name: name.trim(),
+          targetAmt: targetAmt,
+          targetDate: targetDate,
+          status: isCompleted ? 'completed' : 'active',
+        );
+
+        await _firebaseService.updateSavingJar(updatedJar);
+        _savingJars[jarIndex] = updatedJar;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint("Error updating saving jar: $e");
+    }
+    return false;
+  }
+
+  Future<String?> removeMemberFromJar(String jarID, String memberUID) async {
+    try {
+      final jarIndex = _savingJars.indexWhere((j) => j.jarID == jarID);
+      if (jarIndex == -1) {
+        return "Hũ tiết kiệm không tồn tại.";
+      }
+
+      final jar = _savingJars[jarIndex];
+      if (!jar.members.contains(memberUID)) {
+        return "Thành viên này không có trong hũ.";
+      }
+
+      final updatedMembers = List<String>.from(jar.members)..remove(memberUID);
+      final updatedJar = jar.copyWith(members: updatedMembers);
+
+      await _firebaseService.updateSavingJar(updatedJar);
+      _savingJars[jarIndex] = updatedJar;
+      notifyListeners();
+      return null; // Success
+    } catch (e) {
+      debugPrint("Error removing member from jar: $e");
+      return "Lỗi khi xóa thành viên: ${e.toString()}";
+    }
+  }
+
+  Future<String?> leaveJar(String jarID, String userUID) async {
+    try {
+      final jarIndex = _savingJars.indexWhere((j) => j.jarID == jarID);
+      if (jarIndex == -1) {
+        return "Hũ tiết kiệm không tồn tại.";
+      }
+
+      final jar = _savingJars[jarIndex];
+      if (jar.uID == userUID) {
+        return "Chủ sở hữu không thể tự rời khỏi hũ (chỉ có thể xóa hũ).";
+      }
+
+      if (!jar.members.contains(userUID)) {
+        return "Bạn không tham gia hũ này.";
+      }
+
+      final updatedMembers = List<String>.from(jar.members)..remove(userUID);
+      final updatedJar = jar.copyWith(members: updatedMembers);
+
+      await _firebaseService.updateSavingJar(updatedJar);
+      _savingJars.removeAt(jarIndex);
+      notifyListeners();
+      return null; // Success
+    } catch (e) {
+      debugPrint("Error leaving jar: $e");
+      return "Lỗi khi rời khỏi hũ: ${e.toString()}";
+    }
+  }
+
   Future<bool> depositToJar(String jarID, double amount) async {
     if (amount <= 0 || amount > mainBalance) return false;
 

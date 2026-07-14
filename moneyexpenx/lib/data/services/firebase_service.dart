@@ -16,6 +16,7 @@ class FirebaseService {
 
   String? initializationError;
   final _uuid = const Uuid();
+  final Map<String, UserModel> _userCache = {};
 
   Future<void> initialize() async {
     try {
@@ -160,6 +161,23 @@ class FirebaseService {
       }
     } catch (e) {
       debugPrint("Error fetching user by email: $e");
+    }
+    return null;
+  }
+
+  Future<UserModel?> getUserByID(String uid) async {
+    if (_userCache.containsKey(uid)) {
+      return _userCache[uid];
+    }
+    try {
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists) {
+        final user = UserModel.fromMap(doc.data() as Map<String, dynamic>);
+        _userCache[uid] = user;
+        return user;
+      }
+    } catch (e) {
+      debugPrint("Error fetching user by ID: $e");
     }
     return null;
   }

@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/data/models/saving_jar_model.dart';
+import 'package:moneyexpenx/data/models/user_model.dart';
+import 'package:moneyexpenx/data/services/firebase_service.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
 
@@ -586,9 +588,11 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
                       final percentText = '${(progress * 100).toStringAsFixed(0)}%';
                       final isCompleted = jar.status == 'completed' || jar.currentAmt >= jar.targetAmt;
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: GlassContainer(
+                      return GestureDetector(
+                        onTap: () => _showJarDetailsSheet(jar),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: GlassContainer(
                           padding: const EdgeInsets.all(18),
                           color: const Color(0x0CFFFFFF),
                           borderColor: Colors.white.withOpacity(0.05),
@@ -748,12 +752,579 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
                             ],
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    );
+                  },
                   ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showJarDetailsSheet(SavingJarModel jar) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final financeVm = Provider.of<FinanceViewModel>(context);
+            final authVm = Provider.of<AuthViewModel>(context);
+            final currentJar = financeVm.savingJars.firstWhere(
+              (j) => j.jarID == jar.jarID,
+              orElse: () => jar,
+            );
+            final isOwner = currentJar.uID == authVm.currentUser?.uID;
+            final otherMembers = currentJar.members.where((m) => m != currentJar.uID).toList();
+            final progress = currentJar.progressPercent;
+            final isCompleted = currentJar.status == 'completed' || currentJar.currentAmt >= currentJar.targetAmt;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: GlassContainer(
+                borderRadius: 24,
+                color: Colors.black.withOpacity(0.9),
+                borderColor: AppTheme.primaryYellow.withOpacity(0.3),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            currentJar.name,
+                            style: GoogleFonts.outfit(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryYellow,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Tích lũy: ${formatter.format(currentJar.currentAmt)} đ / ${formatter.format(currentJar.targetAmt)} đ (${(progress * 100).toStringAsFixed(0)}%)',
+                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.grey[900],
+                        color: isCompleted ? AppTheme.successGreen : AppTheme.primaryYellow,
+                        minHeight: 8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Hạn mục tiêu: ${DateFormat('dd/MM/yyyy').format(currentJar.targetDate)}',
+                          style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 12),
+                        ),
+                        Text(
+                          currentJar.targetDate.difference(DateTime.now()).inDays >= 0
+                              ? 'Còn lại: ${currentJar.targetDate.difference(DateTime.now()).inDays} ngày'
+                              : 'Đã quá hạn mục tiêu',
+                          style: GoogleFonts.inter(
+                            color: currentJar.targetDate.difference(DateTime.now()).inDays >= 0
+                                ? AppTheme.primaryYellow
+                                : AppTheme.alertRed,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white10, height: 24),
+                    Text(
+                      'Thành Viên Trong Hũ',
+                      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 8),
+                    UserDisplayWidget(
+                      uID: currentJar.uID,
+                      role: 'Chủ sở hữu',
+                    ),
+                    if (otherMembers.isNotEmpty) ...[
+                      ...otherMembers.map((mUid) => UserDisplayWidget(
+                            uID: mUid,
+                            role: 'Thành viên',
+                            showRemoveButton: isOwner,
+                            onRemove: () {
+                              _confirmRemoveMember(currentJar, mUid, setModalState);
+                            },
+                          )),
+                    ] else ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'Chưa chia sẻ cho ai (Quỹ cá nhân)',
+                          style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 13, fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        if (isOwner) ...[
+                          Expanded(
+                            child: GlassCardButton(
+                              color: AppTheme.primaryYellow.withOpacity(0.1),
+                              borderColor: AppTheme.primaryYellow.withOpacity(0.3),
+                              onTap: () {
+                                _showEditJarSheet(currentJar, setModalState);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.edit, color: AppTheme.primaryYellow, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Sửa hũ',
+                                      style: GoogleFonts.inter(
+                                        color: AppTheme.primaryYellow,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GlassCardButton(
+                              color: Colors.white.withOpacity(0.05),
+                              borderColor: Colors.white.withOpacity(0.1),
+                              onTap: () {
+                                _showShareJarDialog(currentJar);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.person_add_alt_1, color: Colors.white70, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Chia sẻ',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white70,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else ...[
+                          Expanded(
+                            child: GlassCardButton(
+                              color: AppTheme.alertRed.withOpacity(0.1),
+                              borderColor: AppTheme.alertRed.withOpacity(0.3),
+                              onTap: () {
+                                _confirmLeaveJar(currentJar);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.exit_to_app, color: AppTheme.alertRed, size: 18),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Rời khỏi hũ',
+                                      style: GoogleFonts.inter(
+                                        color: AppTheme.alertRed,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEditJarSheet(SavingJarModel jar, StateSetter parentSetState) {
+    _nameController.text = jar.name;
+    _targetAmtController.text = jar.targetAmt.toStringAsFixed(0);
+    _selectedTargetDate = jar.targetDate;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: GlassContainer(
+                borderRadius: 24,
+                color: Colors.black.withOpacity(0.95),
+                borderColor: AppTheme.primaryYellow.withOpacity(0.3),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Sửa Hũ Tiết Kiệm',
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryYellow,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _nameController,
+                      style: GoogleFonts.inter(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Tên hũ mục tiêu',
+                        labelStyle: GoogleFonts.inter(color: AppTheme.textSecondary),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: AppTheme.primaryYellow),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _targetAmtController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.inter(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Số tiền mục tiêu (đ)',
+                        labelStyle: GoogleFonts.inter(color: AppTheme.textSecondary),
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: AppTheme.primaryYellow),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    GestureDetector(
+                      onTap: () => _selectTargetDate(context, setModalState),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Colors.grey[800]!),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Ngày hoàn thành mục tiêu:',
+                              style: GoogleFonts.inter(color: AppTheme.textSecondary),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  DateFormat('dd/MM/yyyy').format(_selectedTargetDate),
+                                  style: GoogleFonts.inter(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.calendar_today, color: AppTheme.primaryYellow, size: 18),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    GlassCardButton(
+                      color: AppTheme.primaryYellow,
+                      onTap: () async {
+                        final name = _nameController.text.trim();
+                        final targetAmt = double.tryParse(_targetAmtController.text.trim()) ?? 0.0;
+
+                        if (name.isEmpty || targetAmt <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Vui lòng nhập thông tin hợp lệ', style: GoogleFonts.inter(color: Colors.white)),
+                              backgroundColor: AppTheme.alertRed,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
+                        final success = await financeVm.updateSavingJar(
+                          jarID: jar.jarID,
+                          name: name,
+                          targetAmt: targetAmt,
+                          targetDate: _selectedTargetDate,
+                        );
+
+                        if (success && mounted) {
+                          Navigator.pop(context);
+                          parentSetState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Cập nhật hũ tiết kiệm thành công!', style: GoogleFonts.inter(color: Colors.white)),
+                              backgroundColor: AppTheme.successGreen,
+                            ),
+                          );
+                        }
+                      },
+                      child: Container(
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: Text(
+                          'LƯU THAY ĐỔI',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _confirmRemoveMember(SavingJarModel jar, String memberUid, StateSetter parentSetState) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.cardBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Xóa Thành Viên', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          content: Text('Bạn có chắc chắn muốn xóa thành viên này khỏi hũ tiết kiệm?'),
+          actions: [
+            TextButton(
+              child: Text('HỦY', style: GoogleFonts.inter(color: Colors.white)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: Text('XÓA', style: GoogleFonts.inter(color: AppTheme.alertRed, fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
+                final error = await financeVm.removeMemberFromJar(jar.jarID, memberUid);
+                
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (error != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(error, style: GoogleFonts.inter(color: Colors.white)),
+                        backgroundColor: AppTheme.alertRed,
+                      ),
+                    );
+                  } else {
+                    parentSetState(() {});
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Đã xóa thành viên khỏi hũ thành công!', style: GoogleFonts.inter(color: Colors.white)),
+                        backgroundColor: AppTheme.successGreen,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmLeaveJar(SavingJarModel jar) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppTheme.cardBg,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text('Rời Khỏi Hũ', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+          content: Text('Bạn có chắc chắn muốn rời khỏi hũ tiết kiệm "${jar.name}" không?'),
+          actions: [
+            TextButton(
+              child: Text('HỦY', style: GoogleFonts.inter(color: Colors.white)),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: Text('RỜI HŨ', style: GoogleFonts.inter(color: AppTheme.alertRed, fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
+                final authVm = Provider.of<AuthViewModel>(context, listen: false);
+                final error = await financeVm.leaveJar(jar.jarID, authVm.currentUser!.uID);
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                  if (error != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(error, style: GoogleFonts.inter(color: Colors.white)),
+                        backgroundColor: AppTheme.alertRed,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Bạn đã rời khỏi hũ tiết kiệm thành công!', style: GoogleFonts.inter(color: Colors.white)),
+                        backgroundColor: AppTheme.successGreen,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class UserDisplayWidget extends StatelessWidget {
+  final String uID;
+  final String role;
+  final bool showRemoveButton;
+  final VoidCallback? onRemove;
+
+  const UserDisplayWidget({
+    Key? key,
+    required this.uID,
+    required this.role,
+    this.showRemoveButton = false,
+    this.onRemove,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<UserModel?>(
+      future: FirebaseService.instance.getUserByID(uID),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: CircleAvatar(
+              backgroundColor: Colors.white.withOpacity(0.05),
+              child: const SizedBox(
+                height: 14,
+                width: 14,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryYellow),
+              ),
+            ),
+            title: Text(
+              'Đang tải...',
+              style: GoogleFonts.inter(color: Colors.white38, fontSize: 14),
+            ),
+          );
+        }
+        final user = snapshot.data;
+        final String name = user?.username ?? 'Người dùng';
+        final String email = user?.email ?? '';
+
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: CircleAvatar(
+            backgroundColor: role == 'Chủ sở hữu'
+                ? AppTheme.primaryYellow.withOpacity(0.2)
+                : Colors.white.withOpacity(0.1),
+            child: Icon(
+              role == 'Chủ sở hữu' ? Icons.star : Icons.person,
+              color: role == 'Chủ sở hữu' ? AppTheme.primaryYellow : Colors.white70,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            name,
+            style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+          subtitle: email.isNotEmpty
+              ? Text(
+                  email,
+                  style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 12),
+                )
+              : null,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: role == 'Chủ sở hữu'
+                      ? AppTheme.primaryYellow.withOpacity(0.15)
+                      : Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  role,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: role == 'Chủ sở hữu' ? AppTheme.primaryYellow : AppTheme.textSecondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (showRemoveButton && onRemove != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline, color: AppTheme.alertRed, size: 20),
+                  onPressed: onRemove,
+                  tooltip: 'Xóa khỏi hũ',
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
