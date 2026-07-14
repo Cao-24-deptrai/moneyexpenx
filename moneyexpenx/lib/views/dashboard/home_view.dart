@@ -389,7 +389,7 @@ class _HomeViewState extends State<HomeView> {
                     );
                   },
                 ),
-          const SizedBox(height: 80), // Offset space for FloatingActionButton
+          const SizedBox(height: 16), // Bottom padding spacing
         ],
       ),
     );

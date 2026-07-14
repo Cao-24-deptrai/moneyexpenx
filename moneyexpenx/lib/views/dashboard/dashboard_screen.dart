@@ -4,6 +4,7 @@ import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/views/dashboard/home_view.dart';
 import 'package:moneyexpenx/views/saving_jars/saving_jars_screen.dart';
+import 'package:moneyexpenx/views/statistics/statistics_screen.dart';
 import 'package:moneyexpenx/views/categories/categories_screen.dart';
 import 'package:moneyexpenx/views/transactions/add_transaction_screen.dart';
 import 'package:moneyexpenx/core/utils/route_transitions.dart';
@@ -21,6 +22,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _pages = [
     const HomeView(),
     const SavingJarsScreen(),
+    const StatisticsScreen(),
     const CategoriesScreen(),
   ];
 
@@ -48,12 +50,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          // Selected Page View with Fade route transition effect when switching indices
-          SafeArea(
-            bottom: false,
-            child: IndexedStack(
-              index: _currentIndex,
-              children: _pages,
+          // Selected Page View constrained to end above the navbar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 80, // Navbar is bottom 16 + height 64 = 80
+            child: SafeArea(
+              bottom: false,
+              child: IndexedStack(
+                index: _currentIndex,
+                children: _pages,
+              ),
             ),
           ),
           // Floating Glassmorphism Bottom Navigation Bar
@@ -82,9 +90,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     activeIcon: Icons.savings,
                     label: 'Hũ tiết kiệm',
                   ),
-                  // Middle gap for Floating action or we just navigate
                   _buildNavItem(
                     index: 2,
+                    icon: Icons.bar_chart_outlined,
+                    activeIcon: Icons.bar_chart,
+                    label: 'Thống kê',
+                  ),
+                  _buildNavItem(
+                    index: 3,
                     icon: Icons.category_outlined,
                     activeIcon: Icons.category,
                     label: 'Danh mục',
@@ -92,30 +105,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-          )
+          ),
+          // Fixed add button positioned above the navbar on the right side
+          Positioned(
+            right: 28,
+            bottom: 92, // Sits exactly on top of the navbar (which is bottom 16 + height 64 = 80)
+            child: Hero(
+              tag: 'add_transaction_btn',
+              child: GlassIconButton(
+                icon: Icons.add,
+                size: 32,
+                iconColor: AppTheme.primaryYellow, // Plus sign changed to gold
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    SlidePageRoute(
+                      page: const AddTransactionScreen(),
+                      direction: AxisDirection.up,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 24.0), // Lifted slightly above the bar
-        child: Hero(
-          tag: 'add_transaction_btn',
-          child: GlassIconButton(
-            icon: Icons.add,
-            size: 32,
-            iconColor: Colors.black,
-            onTap: () {
-              Navigator.push(
-                context,
-                SlidePageRoute(
-                  page: const AddTransactionScreen(),
-                  direction: AxisDirection.up, // Slide up from bottom
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
     );
   }
 
