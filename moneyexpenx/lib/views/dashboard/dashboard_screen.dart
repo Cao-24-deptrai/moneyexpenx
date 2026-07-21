@@ -8,6 +8,7 @@ import 'package:moneyexpenx/views/statistics/statistics_screen.dart';
 import 'package:moneyexpenx/views/categories/categories_screen.dart';
 import 'package:moneyexpenx/views/transactions/add_transaction_screen.dart';
 import 'package:moneyexpenx/core/utils/route_transitions.dart';
+import 'package:moneyexpenx/views/profile/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -24,6 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const SavingJarsScreen(),
     const StatisticsScreen(),
     const CategoriesScreen(),
+    const ProfileScreen(),
   ];
 
   void _onTabTapped(int index) {
@@ -102,6 +104,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     activeIcon: Icons.category,
                     label: 'Danh mục',
                   ),
+                  _buildNavItem(
+                    index: 4,
+                    icon: Icons.person_outline,
+                    activeIcon: Icons.person,
+                    label: 'Tài khoản',
+                  ),
                 ],
               ),
             ),
@@ -161,7 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 3),
             Text(
               label,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.beVietnamPro(
                 color: color,
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

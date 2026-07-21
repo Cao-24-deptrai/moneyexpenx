@@ -8,6 +8,7 @@ import 'package:moneyexpenx/core/constants/icons.dart';
 import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
+import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -53,21 +54,34 @@ class _HomeViewState extends State<HomeView> {
           ),
           title: Row(
             children: [
-              const Icon(Icons.warning_rounded, color: AppTheme.alertRed, size: 28),
+              const Icon(
+                Icons.warning_rounded,
+                color: AppTheme.alertRed,
+                size: 28,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Vượt Ngân Sách!',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: AppTheme.alertRed),
+                style: GoogleFonts.beVietnamPro(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.alertRed,
+                ),
               ),
             ],
           ),
           content: Text(
             'Cảnh báo: Tổng chi tiêu của bạn trong tháng này (${formatter.format(financeVm.currentMonthExpense)} đ) đã VƯỢT QUÁ hạn mức ngân sách đặt ra (${formatter.format(financeVm.monthlyBudget!.limitAmt)} đ).\n\nHãy kiểm tra lại các khoản chi tiêu của mình nhé!',
-            style: GoogleFonts.inter(),
+            style: GoogleFonts.beVietnamPro(),
           ),
           actions: [
             TextButton(
-              child: Text('ĐÃ HIỂU', style: GoogleFonts.inter(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold)),
+              child: Text(
+                'ĐÃ HIỂU',
+                style: GoogleFonts.beVietnamPro(
+                  color: AppTheme.primaryYellow,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onPressed: () {
                 financeVm.dismissBudgetAlert();
                 Navigator.pop(context);
@@ -82,9 +96,11 @@ class _HomeViewState extends State<HomeView> {
   void _showSetBudgetDialog() {
     final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
     final authVm = Provider.of<AuthViewModel>(context, listen: false);
-    
+
     if (financeVm.monthlyBudget != null) {
-      _budgetController.text = financeVm.monthlyBudget!.limitAmt.toStringAsFixed(0);
+      _budgetController.text = formatter.format(
+        financeVm.monthlyBudget!.limitAmt,
+      );
     } else {
       _budgetController.clear();
     }
@@ -94,15 +110,18 @@ class _HomeViewState extends State<HomeView> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: AppTheme.cardBg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Text(
             'Thiết Lập Ngân Sách',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
           ),
           content: TextField(
             controller: _budgetController,
             keyboardType: TextInputType.number,
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
+            inputFormatters: [ThousandsSeparatorInputFormatter()],
             decoration: const InputDecoration(
               labelText: 'Hạn mức chi tiêu tháng (đ)',
               focusedBorder: UnderlineInputBorder(
@@ -112,16 +131,29 @@ class _HomeViewState extends State<HomeView> {
           ),
           actions: [
             TextButton(
-              child: Text('HỦY', style: GoogleFonts.inter(color: Colors.white)),
+              child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white)),
               onPressed: () => Navigator.pop(context),
             ),
             TextButton(
-              child: Text('CẬP NHẬT', style: GoogleFonts.inter(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold)),
+              child: Text(
+                'CẬP NHẬT',
+                style: GoogleFonts.beVietnamPro(
+                  color: AppTheme.primaryYellow,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               onPressed: () async {
-                final limit = double.tryParse(_budgetController.text.trim()) ?? 0.0;
+                final cleanText = _budgetController.text.replaceAll(
+                  RegExp(r'[^\d]'),
+                  '',
+                );
+                final limit = double.tryParse(cleanText) ?? 0.0;
                 if (limit <= 0) return;
 
-                final success = await financeVm.setMonthlyBudget(limit, authVm.currentUser!.uID);
+                final success = await financeVm.setMonthlyBudget(
+                  limit,
+                  authVm.currentUser!.uID,
+                );
                 if (success && mounted) {
                   Navigator.pop(context);
                 }
@@ -161,11 +193,14 @@ class _HomeViewState extends State<HomeView> {
                   children: [
                     Text(
                       'Xin chào,',
-                      style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
+                      style: GoogleFonts.beVietnamPro(
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                     Text(
                       authVm.currentUser?.username ?? 'Khách',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.beVietnamPro(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -178,7 +213,7 @@ class _HomeViewState extends State<HomeView> {
                   onPressed: () {
                     authVm.logout();
                   },
-                )
+                ),
               ],
             ),
           ),
@@ -195,7 +230,7 @@ class _HomeViewState extends State<HomeView> {
                 children: [
                   Text(
                     'SỐ DƯ TÀI KHOẢN CHÍNH',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.beVietnamPro(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textSecondary,
@@ -205,7 +240,7 @@ class _HomeViewState extends State<HomeView> {
                   const SizedBox(height: 8),
                   Text(
                     '${formatter.format(financeVm.mainBalance)} đ',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.beVietnamPro(
                       fontSize: 34,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryYellow,
@@ -232,7 +267,7 @@ class _HomeViewState extends State<HomeView> {
                         ),
                       ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -252,7 +287,7 @@ class _HomeViewState extends State<HomeView> {
               children: [
                 Text(
                   'Giao Dịch Gần Đây',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.beVietnamPro(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -260,7 +295,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 Text(
                   'Kéo để xóa',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.beVietnamPro(
                     fontSize: 12,
                     color: AppTheme.textSecondary,
                   ),
@@ -278,11 +313,15 @@ class _HomeViewState extends State<HomeView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.receipt_long_outlined, size: 48, color: AppTheme.textSecondary.withOpacity(0.3)),
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 48,
+                        color: AppTheme.textSecondary.withOpacity(0.3),
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Chưa có giao dịch nào được tạo.',
-                        style: GoogleFonts.inter(color: AppTheme.textSecondary),
+                        style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
                       ),
                     ],
                   ),
@@ -294,11 +333,17 @@ class _HomeViewState extends State<HomeView> {
                   itemCount: financeVm.transactions.length,
                   itemBuilder: (context, index) {
                     final tx = financeVm.transactions[index];
-                    
+
                     // Match category
                     final cat = financeVm.categories.firstWhere(
                       (c) => c.ctgID == tx.ctgID,
-                      orElse: () => CategoryModel(ctgID: '', uID: '', name: 'Không rõ', type: 'Chi', iconKey: 'payment'),
+                      orElse: () => CategoryModel(
+                        ctgID: '',
+                        uID: '',
+                        name: 'Không rõ',
+                        type: 'Chi',
+                        iconKey: 'payment',
+                      ),
                     );
 
                     final isIncome = cat.type == 'Thu';
@@ -321,7 +366,10 @@ class _HomeViewState extends State<HomeView> {
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         child: GlassContainer(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                           color: const Color(0x08FFFFFF),
                           borderColor: Colors.white.withOpacity(0.04),
                           child: Row(
@@ -332,7 +380,9 @@ class _HomeViewState extends State<HomeView> {
                                     : AppTheme.alertRed.withOpacity(0.1),
                                 child: Icon(
                                   CategoryIcons.getIcon(cat.iconKey),
-                                  color: isIncome ? AppTheme.successGreen : AppTheme.alertRed,
+                                  color: isIncome
+                                      ? AppTheme.successGreen
+                                      : AppTheme.alertRed,
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -342,7 +392,7 @@ class _HomeViewState extends State<HomeView> {
                                   children: [
                                     Text(
                                       cat.name,
-                                      style: GoogleFonts.inter(
+                                      style: GoogleFonts.beVietnamPro(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -350,8 +400,10 @@ class _HomeViewState extends State<HomeView> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      tx.note.isNotEmpty ? tx.note : 'Giao dịch',
-                                      style: GoogleFonts.inter(
+                                      tx.note.isNotEmpty
+                                          ? tx.note
+                                          : 'Giao dịch',
+                                      style: GoogleFonts.beVietnamPro(
                                         fontSize: 13,
                                         color: AppTheme.textSecondary,
                                       ),
@@ -366,16 +418,18 @@ class _HomeViewState extends State<HomeView> {
                                 children: [
                                   Text(
                                     '${isIncome ? '+' : '-'}${formatter.format(tx.amt)} đ',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.beVietnamPro(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: isIncome ? AppTheme.successGreen : AppTheme.alertRed,
+                                      color: isIncome
+                                          ? AppTheme.successGreen
+                                          : AppTheme.alertRed,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     DateFormat('dd/MM').format(tx.tsDate),
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.beVietnamPro(
                                       fontSize: 11,
                                       color: AppTheme.textSecondary,
                                     ),
@@ -411,7 +465,7 @@ class _HomeViewState extends State<HomeView> {
           children: [
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.beVietnamPro(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.textSecondary,
@@ -420,14 +474,14 @@ class _HomeViewState extends State<HomeView> {
             ),
             Text(
               '${formatter.format(amount)} đ',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.beVietnamPro(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
           ],
-        )
+        ),
       ],
     );
   }
@@ -444,7 +498,7 @@ class _HomeViewState extends State<HomeView> {
           children: [
             Text(
               'Bạn chưa thiết lập ngân sách tháng này.',
-              style: GoogleFonts.inter(color: AppTheme.textSecondary),
+              style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -453,10 +507,13 @@ class _HomeViewState extends State<HomeView> {
               borderColor: AppTheme.primaryYellow.withOpacity(0.2),
               onTap: _showSetBudgetDialog,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 child: Text(
                   'ĐẶT NGÂN SÁCH NGAY',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.beVietnamPro(
                     color: AppTheme.primaryYellow,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
@@ -472,7 +529,8 @@ class _HomeViewState extends State<HomeView> {
     final expense = financeVm.currentMonthExpense;
     final limit = budget.limitAmt;
     final progress = financeVm.budgetProgress;
-    final ratioStr = '${formatter.format(expense)} / ${formatter.format(limit)} đ';
+    final ratioStr =
+        '${formatter.format(expense)} / ${formatter.format(limit)} đ';
 
     Color cardBorderColor = Colors.white.withOpacity(0.04);
     Color progressColor = AppTheme.primaryYellow;
@@ -490,7 +548,7 @@ class _HomeViewState extends State<HomeView> {
 
     return GlassContainer(
       padding: const EdgeInsets.all(20),
-      color: financeVm.isBudgetExceeded 
+      color: financeVm.isBudgetExceeded
           ? AppTheme.alertRed.withOpacity(0.02)
           : const Color(0x06FFFFFF),
       borderColor: cardBorderColor,
@@ -502,7 +560,7 @@ class _HomeViewState extends State<HomeView> {
             children: [
               Text(
                 'NGÂN SÁCH THÁNG NÀY',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.beVietnamPro(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textSecondary,
@@ -511,8 +569,12 @@ class _HomeViewState extends State<HomeView> {
               ),
               GestureDetector(
                 onTap: _showSetBudgetDialog,
-                child: const Icon(Icons.edit, color: AppTheme.primaryYellow, size: 16),
-              )
+                child: const Icon(
+                  Icons.edit,
+                  color: AppTheme.primaryYellow,
+                  size: 16,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -521,7 +583,7 @@ class _HomeViewState extends State<HomeView> {
             children: [
               Text(
                 ratioStr,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.beVietnamPro(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -563,7 +625,7 @@ class _HomeViewState extends State<HomeView> {
       ),
       child: Text(
         text,
-        style: GoogleFonts.inter(
+        style: GoogleFonts.beVietnamPro(
           fontSize: 9,
           fontWeight: FontWeight.bold,
           color: color,

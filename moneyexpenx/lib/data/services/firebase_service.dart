@@ -182,6 +182,18 @@ class FirebaseService {
     return null;
   }
 
+  Future<void> updateUsername(String uid, String newUsername) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'username': newUsername,
+      });
+      _userCache.remove(uid);
+    } catch (e) {
+      debugPrint("Error updating username: $e");
+      rethrow;
+    }
+  }
+
   // ==========================================
   // CATEGORIES SERVICES
   // ==========================================

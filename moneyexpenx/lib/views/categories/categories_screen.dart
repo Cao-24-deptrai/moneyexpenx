@@ -60,7 +60,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                       children: [
                         Text(
                           'Thêm Danh Mục',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.beVietnamPro(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryYellow,
@@ -76,10 +76,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                     // Name field
                     TextField(
                       controller: _nameController,
-                      style: GoogleFonts.inter(color: Colors.white),
+                      style: GoogleFonts.beVietnamPro(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: 'Tên danh mục',
-                        labelStyle: GoogleFonts.inter(color: AppTheme.textSecondary),
+                        labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
                         focusedBorder: const UnderlineInputBorder(
                           borderSide: BorderSide(color: AppTheme.primaryYellow),
                         ),
@@ -91,11 +91,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                       children: [
                         Text(
                           'Loại:',
-                          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 16),
                         ChoiceChip(
-                          label: Text('Chi tiêu (Chi)', style: GoogleFonts.inter(color: _selectedType == 'Chi' ? Colors.black : Colors.white)),
+                          label: Text('Chi tiêu (Chi)', style: GoogleFonts.beVietnamPro(color: _selectedType == 'Chi' ? Colors.black : Colors.white)),
                           selected: _selectedType == 'Chi',
                           selectedColor: AppTheme.primaryYellow,
                           backgroundColor: Colors.grey[900],
@@ -105,7 +105,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                         ),
                         const SizedBox(width: 10),
                         ChoiceChip(
-                          label: Text('Thu nhập (Thu)', style: GoogleFonts.inter(color: _selectedType == 'Thu' ? Colors.black : Colors.white)),
+                          label: Text('Thu nhập (Thu)', style: GoogleFonts.beVietnamPro(color: _selectedType == 'Thu' ? Colors.black : Colors.white)),
                           selected: _selectedType == 'Thu',
                           selectedColor: AppTheme.primaryYellow,
                           backgroundColor: Colors.grey[900],
@@ -118,7 +118,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                     const SizedBox(height: 20),
                     Text(
                       'Chọn Biểu Tượng:',
-                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
                     // Icons grid
@@ -179,7 +179,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                         if (error != null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(error, style: GoogleFonts.inter(color: Colors.white)),
+                              content: Text(error, style: GoogleFonts.beVietnamPro(color: Colors.white)),
                               backgroundColor: AppTheme.alertRed,
                             ),
                           );
@@ -193,7 +193,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                         alignment: Alignment.center,
                         child: Text(
                           'TẠO DANH MỤC',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.beVietnamPro(
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
@@ -218,14 +218,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
       appBar: AppBar(
         title: Text(
           'Danh Mục Tài Chính',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 22),
+          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.primaryYellow,
           labelColor: AppTheme.primaryYellow,
           unselectedLabelColor: AppTheme.textSecondary,
-          labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+          labelStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 16),
           tabs: const [
             Tab(text: 'KHOẢN CHI'),
             Tab(text: 'KHOẢN THU'),
@@ -258,14 +258,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
             const SizedBox(height: 16),
             Text(
               'Chưa có danh mục nào.',
-              style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 16),
+              style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 16),
             ),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: _showAddCategorySheet,
               child: Text(
                 'Tạo danh mục mới',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.beVietnamPro(
                   color: AppTheme.primaryYellow,
                   fontWeight: FontWeight.w600,
                   decoration: TextDecoration.underline,
@@ -302,7 +302,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                 Expanded(
                   child: Text(
                     cat.name,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.beVietnamPro(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -311,7 +311,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                 ),
                 Text(
                   cat.type == 'Thu' ? 'Thu nhập' : 'Chi tiêu',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.beVietnamPro(
                     fontSize: 12,
                     color: cat.type == 'Thu' ? AppTheme.successGreen : AppTheme.alertRed,
                   ),
@@ -325,18 +325,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                       context: context,
                       builder: (context) => AlertDialog(
                         backgroundColor: AppTheme.cardBg,
-                        title: Text('Xóa Danh Mục', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+                        title: Text('Xóa Danh Mục', style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold)),
                         content: Text(
                           'Bạn có chắc muốn xóa danh mục "${cat.name}"? Các giao dịch thuộc danh mục này sẽ mất phân loại.',
-                          style: GoogleFonts.inter(),
+                          style: GoogleFonts.beVietnamPro(),
                         ),
                         actions: [
                           TextButton(
-                            child: Text('HỦY', style: GoogleFonts.inter(color: Colors.white)),
+                            child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white)),
                             onPressed: () => Navigator.pop(context),
                           ),
                           TextButton(
-                            child: Text('XÓA', style: GoogleFonts.inter(color: AppTheme.alertRed)),
+                            child: Text('XÓA', style: GoogleFonts.beVietnamPro(color: AppTheme.alertRed)),
                             onPressed: () {
                               Provider.of<FinanceViewModel>(context, listen: false).deleteCategory(cat.ctgID);
                               Navigator.pop(context);

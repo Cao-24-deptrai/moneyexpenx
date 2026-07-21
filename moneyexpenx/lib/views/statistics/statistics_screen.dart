@@ -100,7 +100,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
           SnackBar(
             content: Text(
               'Đã xuất báo cáo thành công!\nĐường dẫn: $filePath',
-              style: GoogleFonts.inter(color: Colors.white),
+              style: GoogleFonts.beVietnamPro(color: Colors.white),
             ),
             backgroundColor: AppTheme.successGreen,
             duration: const Duration(seconds: 5),
@@ -112,7 +112,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi xuất báo cáo: $e', style: GoogleFonts.inter(color: Colors.white)),
+            content: Text('Lỗi xuất báo cáo: $e', style: GoogleFonts.beVietnamPro(color: Colors.white)),
             backgroundColor: AppTheme.alertRed,
             behavior: SnackBarBehavior.floating,
           ),
@@ -134,14 +134,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
       appBar: AppBar(
         title: Text(
           'Thống Kê Báo Cáo',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 22),
+          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         bottom: TabBar(
           controller: _typeTabController,
           indicatorColor: AppTheme.primaryYellow,
           labelColor: AppTheme.primaryYellow,
           unselectedLabelColor: AppTheme.textSecondary,
-          labelStyle: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16),
+          labelStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 16),
           tabs: const [
             Tab(text: 'KHOẢN CHI'),
             Tab(text: 'KHOẢN THU'),
@@ -168,7 +168,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
               children: [
                 Text(
                   'Khoảng thời gian:',
-                  style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
+                  style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 14),
                 ),
                 Row(
                   children: ['Tuần', 'Tháng', 'Năm'].map((filter) {
@@ -196,7 +196,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                               : filter == 'Tháng'
                                   ? 'Tháng này'
                                   : 'Năm nay',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.beVietnamPro(
                             color: isSelected ? AppTheme.primaryYellow : AppTheme.textSecondary,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             fontSize: 12,
@@ -243,7 +243,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
             const SizedBox(height: 16),
             Text(
               'Chưa có giao dịch $type nào trong thời gian này.',
-              style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 15),
+              style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 15),
             ),
           ],
         ),
@@ -308,7 +308,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
             children: [
               Text(
                 'TỔNG ${type.toUpperCase()}',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.beVietnamPro(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textSecondary,
@@ -318,7 +318,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
               const SizedBox(height: 8),
               Text(
                 '${formatter.format(totalSum)} đ',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.beVietnamPro(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: type == 'Thu' ? AppTheme.successGreen : AppTheme.alertRed,
@@ -338,7 +338,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
             children: [
               Text(
                 'Phân Tích Cơ Cấu',
-                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                style: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 24),
               // Draw Custom Donut Chart
@@ -356,11 +356,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                       children: [
                         Text(
                           'Giao dịch',
-                          style: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 11),
+                          style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 11),
                         ),
                         Text(
                           '${typeTxs.length}',
-                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -377,7 +377,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
           padding: const EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
             'Xếp hạng danh mục',
-            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            style: GoogleFonts.beVietnamPro(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
 
@@ -417,7 +417,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                       children: [
                         Text(
                           item.category.name,
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: GoogleFonts.beVietnamPro(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                         const SizedBox(height: 4),
                         // Linear mini-bar indicator
@@ -439,12 +439,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
                     children: [
                       Text(
                         '${formatter.format(item.amount)} đ',
-                        style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: GoogleFonts.beVietnamPro(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         percentStr,
-                        style: GoogleFonts.inter(fontSize: 12, color: AppTheme.textSecondary),
+                        style: GoogleFonts.beVietnamPro(fontSize: 12, color: AppTheme.textSecondary),
                       ),
                     ],
                   ),

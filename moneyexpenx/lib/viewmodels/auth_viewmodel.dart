@@ -163,4 +163,30 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
     return false;
   }
+
+  Future<bool> updateUsername(String newUsername) async {
+    if (_currentUser == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _firebaseService.updateUsername(_currentUser!.uID, newUsername.trim());
+      _currentUser = UserModel(
+        uID: _currentUser!.uID,
+        username: newUsername.trim(),
+        email: _currentUser!.email,
+        createdAt: _currentUser!.createdAt,
+      );
+      await LocalStorageService.cacheUsername(newUsername.trim());
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

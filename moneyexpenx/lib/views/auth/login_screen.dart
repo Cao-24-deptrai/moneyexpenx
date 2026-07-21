@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             "Vui lòng điền đúng và đầy đủ thông tin yêu cầu.",
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
           SnackBar(
             content: Text(
               _authMode == AuthMode.signUp ? "Đăng ký tài khoản thành công!" : "Đăng nhập thành công!",
-              style: GoogleFonts.inter(color: Colors.white),
+              style: GoogleFonts.beVietnamPro(color: Colors.white),
             ),
             backgroundColor: AppTheme.successGreen,
             behavior: SnackBarBehavior.floating,
@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             authVm.errorMessage ?? "Lỗi xác thực. Vui lòng kiểm tra lại thông tin.",
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             "Vui lòng điền địa chỉ email.",
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             "Email không đúng định dạng.",
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             "Đã gửi liên kết khôi phục mật khẩu đến email của bạn.",
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.successGreen,
           behavior: SnackBarBehavior.floating,
@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
         SnackBar(
           content: Text(
             authVm.errorMessage ?? "Có lỗi xảy ra. Vui lòng thử lại sau.",
-            style: GoogleFonts.inter(color: Colors.white),
+            style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
@@ -281,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Quản lý chi tiêu tối giản & sang trọng',
+                    'Quản lý chi tiêu thông minh',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           letterSpacing: 0.5,
                           color: AppTheme.textSecondary,
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                               const SizedBox(height: 12),
                               Text(
                                 'Nhập địa chỉ email của bạn, chúng tôi sẽ gửi liên kết khôi phục mật khẩu.',
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.beVietnamPro(
                                   color: AppTheme.textSecondary,
                                   fontSize: 13,
                                   height: 1.4,
@@ -417,7 +417,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   onTap: () => _changeMode(AuthMode.forgotPassword),
                                   child: Text(
                                     'Quên mật khẩu?',
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.beVietnamPro(
                                       color: AppTheme.primaryYellow,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w500,
@@ -455,7 +455,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                             : _authMode == AuthMode.login
                                                 ? 'ĐĂNG NHẬP'
                                                 : 'GỬI LIÊN KẾT',
-                                        style: GoogleFonts.outfit(
+                                        style: GoogleFonts.beVietnamPro(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
                                           color: Colors.black,
@@ -475,7 +475,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                   _authMode == AuthMode.signUp
                                       ? 'Đã có tài khoản? Đăng nhập ngay'
                                       : 'Chưa có tài khoản? Đăng ký ngay',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.beVietnamPro(
                                     color: AppTheme.primaryYellow,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -490,7 +490,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                                 onTap: () => _changeMode(AuthMode.login),
                                 child: Text(
                                   'Quay lại đăng nhập',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.beVietnamPro(
                                     color: Colors.white70,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -559,7 +559,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   child: Center(
                     child: Text(
                       'Đăng Nhập',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.beVietnamPro(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: _authMode == AuthMode.login ? Colors.black : Colors.white70,
@@ -575,7 +575,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                   child: Center(
                     child: Text(
                       'Đăng Ký',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.beVietnamPro(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                         color: _authMode == AuthMode.signUp ? Colors.black : Colors.white70,
@@ -606,7 +606,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
-      style: GoogleFonts.inter(color: Colors.white, fontSize: 15),
+      style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 15),
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: AppTheme.textSecondary, size: 20),
         suffixIcon: isPassword
@@ -620,8 +620,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
               )
             : null,
         labelText: label,
-        labelStyle: GoogleFonts.inter(color: AppTheme.textSecondary, fontSize: 14),
-        floatingLabelStyle: GoogleFonts.outfit(color: AppTheme.primaryYellow),
+        labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 14),
+        floatingLabelStyle: GoogleFonts.beVietnamPro(color: AppTheme.primaryYellow),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: AppTheme.textSecondary.withOpacity(0.2)),

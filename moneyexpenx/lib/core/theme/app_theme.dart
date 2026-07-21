@@ -27,32 +27,32 @@ class AppTheme {
         error: alertRed,
       ),
       textTheme: TextTheme(
-        headlineLarge: GoogleFonts.outfit(
+        headlineLarge: GoogleFonts.beVietnamPro(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
-        headlineMedium: GoogleFonts.outfit(
+        headlineMedium: GoogleFonts.beVietnamPro(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: textPrimary,
         ),
-        titleLarge: GoogleFonts.outfit(
+        titleLarge: GoogleFonts.beVietnamPro(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: textPrimary,
         ),
-        bodyLarge: GoogleFonts.inter(
+        bodyLarge: GoogleFonts.beVietnamPro(
           fontSize: 16,
           fontWeight: FontWeight.normal,
           color: textPrimary,
         ),
-        bodyMedium: GoogleFonts.inter(
+        bodyMedium: GoogleFonts.beVietnamPro(
           fontSize: 14,
           fontWeight: FontWeight.normal,
           color: textSecondary,
         ),
-        labelLarge: GoogleFonts.inter(
+        labelLarge: GoogleFonts.beVietnamPro(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: primaryYellow,

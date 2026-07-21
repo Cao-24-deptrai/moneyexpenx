@@ -90,7 +90,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     if (amt <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Vui lòng nhập số tiền hợp lệ', style: GoogleFonts.inter(color: Colors.white)),
+          content: Text('Vui lòng nhập số tiền hợp lệ', style: GoogleFonts.beVietnamPro(color: Colors.white)),
           backgroundColor: AppTheme.alertRed,
         ),
       );
@@ -100,7 +100,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Vui lòng chọn danh mục', style: GoogleFonts.inter(color: Colors.white)),
+          content: Text('Vui lòng chọn danh mục', style: GoogleFonts.beVietnamPro(color: Colors.white)),
           backgroundColor: AppTheme.alertRed,
         ),
       );
@@ -126,7 +126,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           SnackBar(
             content: Text(
               'Cảnh báo: Bạn đã vượt quá hạn mức chi tiêu tháng này!',
-              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+              style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             backgroundColor: AppTheme.alertRed,
             duration: const Duration(seconds: 4),
@@ -159,7 +159,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       appBar: AppBar(
         title: Text(
           'Thêm Giao Dịch',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+          style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -196,7 +196,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   Center(
                     child: Text(
                       '$formattedAmt đ',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.beVietnamPro(
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryYellow,
@@ -208,7 +208,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   // Category Selector Title
                   Text(
                     'Chọn danh mục:',
-                    style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: Colors.white),
+                    style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 12),
                   // Categories Horizontal scroll
@@ -223,7 +223,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             child: Text(
                               'Không có danh mục ${_transactionType.toLowerCase()}.\nHãy tạo danh mục trước.',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(color: AppTheme.textSecondary),
+                              style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
                             ),
                           ),
                         )
@@ -269,7 +269,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                       const SizedBox(height: 6),
                                       Text(
                                         cat.name,
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.beVietnamPro(
                                           fontSize: 12,
                                           color: isSelected ? AppTheme.primaryYellow : Colors.white70,
                                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -301,7 +301,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 const SizedBox(width: 12),
                                 Text(
                                   DateFormat('dd/MM/yyyy').format(_selectedDate),
-                                  style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                                  style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 14),
                                 ),
                               ],
                             ),
@@ -313,11 +313,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _noteController,
-                    style: GoogleFonts.inter(color: Colors.white),
+                    style: GoogleFonts.beVietnamPro(color: Colors.white),
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.note_alt_outlined, color: AppTheme.primaryYellow),
                       labelText: 'Ghi chú',
-                      labelStyle: GoogleFonts.inter(color: AppTheme.textSecondary),
+                      labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Colors.white10),
@@ -361,7 +361,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         ),
         child: Text(
           label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.beVietnamPro(
             fontWeight: FontWeight.bold,
             color: isSelected ? Colors.black : Colors.white,
             fontSize: 13,
@@ -407,7 +407,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     child: Center(
                       child: Text(
                         key,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.beVietnamPro(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: isSpecial ? AppTheme.primaryYellow : Colors.white,
