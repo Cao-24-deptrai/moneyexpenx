@@ -10,6 +10,7 @@ import 'package:moneyexpenx/core/constants/icons.dart';
 import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/data/models/transaction_model.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
+import 'package:moneyexpenx/views/export/export_report_screen.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({Key? key}) : super(key: key);
@@ -136,6 +137,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
           'Thống Kê Báo Cáo',
           style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 22),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined, color: AppTheme.primaryYellow),
+            tooltip: 'Xuất Báo Cáo Excel/PDF',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ExportReportScreen()),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _typeTabController,
           indicatorColor: AppTheme.primaryYellow,

@@ -6,6 +6,9 @@ import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
+import 'package:moneyexpenx/views/loans/loans_screen.dart';
+import 'package:moneyexpenx/views/loans/interest_calculator_view.dart';
+import 'package:moneyexpenx/views/export/export_report_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -354,6 +357,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 28),
+
+                  // Features / Advanced Management Section
+                  Text(
+                    'Công cụ tài chính nâng cao',
+                    style: GoogleFonts.beVietnamPro(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Column(
+                    children: [
+                      _buildMenuCard(
+                        context,
+                        title: 'Khoản Vay & Nợ',
+                        subtitle: 'Quản lý danh sách cho vay (+) và đi vay (-)',
+                        icon: Icons.account_balance_outlined,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const LoansScreen()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuCard(
+                        context,
+                        title: 'Máy Tính Lãi Suất Ngân Hàng',
+                        subtitle: 'Tính lãi đơn, lãi kép & dư nợ giảm dần',
+                        icon: Icons.calculate_outlined,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const InterestCalculatorView()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuCard(
+                        context,
+                        title: 'Xuất Báo Cáo Excel / PDF',
+                        subtitle: 'Xuất lịch sử thu chi & dư nợ ra file Excel/CSV/PDF',
+                        icon: Icons.file_download_outlined,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ExportReportScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 28),
 
                   // Settings / Account Management

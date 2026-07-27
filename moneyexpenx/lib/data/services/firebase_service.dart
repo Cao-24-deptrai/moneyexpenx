@@ -8,6 +8,7 @@ import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/data/models/transaction_model.dart';
 import 'package:moneyexpenx/data/models/saving_jar_model.dart';
 import 'package:moneyexpenx/data/models/budget_model.dart';
+import 'package:moneyexpenx/data/models/loan_model.dart';
 import 'package:moneyexpenx/firebase_options.dart';
 
 class FirebaseService {
@@ -336,5 +337,38 @@ class FirebaseService {
     BudgetModel newBudget = budget.copyWith(bgID: id);
     await FirebaseFirestore.instance.collection('budgets').doc(id).set(newBudget.toMap());
     return newBudget;
+  }
+
+  // ==========================================
+  // LOANS AND DEBTS SERVICES
+  // ==========================================
+
+  Future<List<LoanModel>> getLoans(String uID) async {
+    try {
+      QuerySnapshot snap = await FirebaseFirestore.instance
+          .collection('loans')
+          .where('uID', isEqualTo: uID)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snap.docs.map((doc) => LoanModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+    } catch (e) {
+      debugPrint("Error fetching loans: $e");
+      return [];
+    }
+  }
+
+  Future<LoanModel> addLoan(LoanModel loan) async {
+    String id = _uuid.v4();
+    LoanModel newLoan = loan.copyWith(loanID: id);
+    await FirebaseFirestore.instance.collection('loans').doc(id).set(newLoan.toMap());
+    return newLoan;
+  }
+
+  Future<void> updateLoan(LoanModel loan) async {
+    await FirebaseFirestore.instance.collection('loans').doc(loan.loanID).update(loan.toMap());
+  }
+
+  Future<void> deleteLoan(String loanID) async {
+    await FirebaseFirestore.instance.collection('loans').doc(loan.loanID).delete();
   }
 }

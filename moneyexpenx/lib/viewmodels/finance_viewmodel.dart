@@ -3,7 +3,9 @@ import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/data/models/transaction_model.dart';
 import 'package:moneyexpenx/data/models/saving_jar_model.dart';
 import 'package:moneyexpenx/data/models/budget_model.dart';
+import 'package:moneyexpenx/data/models/loan_model.dart';
 import 'package:moneyexpenx/data/services/firebase_service.dart';
+import 'package:moneyexpenx/data/services/export_service.dart';
 
 class FinanceViewModel extends ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService.instance;
@@ -11,6 +13,7 @@ class FinanceViewModel extends ChangeNotifier {
   List<CategoryModel> _categories = [];
   List<TransactionModel> _transactions = [];
   List<SavingJarModel> _savingJars = [];
+  List<LoanModel> _loans = [];
   BudgetModel? _monthlyBudget;
   bool _isLoading = false;
 
@@ -20,6 +23,13 @@ class FinanceViewModel extends ChangeNotifier {
   List<CategoryModel> get categories => _categories;
   List<TransactionModel> get transactions => _transactions;
   List<SavingJarModel> get savingJars => _savingJars;
+  List<LoanModel> get loans => _loans;
+  List<LoanModel> get activeLoans => _loans.where((l) => l.type == 'loan' && l.status == 'active').toList();
+  List<LoanModel> get activeDebts => _loans.where((l) => l.type == 'debt' && l.status == 'active').toList();
+
+  double get totalLoanedAmount => activeLoans.fold(0.0, (sum, l) => sum + l.remainingPrincipal);
+  double get totalBorrowedAmount => activeDebts.fold(0.0, (sum, l) => sum + l.remainingPrincipal);
+
   BudgetModel? get monthlyBudget => _monthlyBudget;
   bool get isLoading => _isLoading;
 
@@ -120,6 +130,7 @@ class FinanceViewModel extends ChangeNotifier {
       _categories = await _firebaseService.getCategories(uID);
       _transactions = await _firebaseService.getTransactions(uID);
       _savingJars = await _firebaseService.getSavingJars(uID);
+      _loans = await _firebaseService.getLoans(uID);
       _monthlyBudget = await _firebaseService.getBudget(uID, DateTime.now());
     } catch (e) {
       debugPrint("Error loading finance data: $e");
@@ -459,5 +470,145 @@ class FinanceViewModel extends ChangeNotifier {
       debugPrint("Error setting budget: $e");
       return false;
     }
+  }
+
+  // ==========================================
+  // LOANS AND DEBTS CRUD
+  // ==========================================
+
+  Future<bool> addLoan({
+    required String uID,
+    required String type, // 'loan' (cho vay) or 'debt' (đi vay)
+    required String personName,
+    required double principal,
+    required double interestRate,
+    required String interestType, // 'simple', 'compound', 'reducing'
+    required int months,
+    required DateTime startDate,
+    String? notes,
+  }) async {
+    try {
+      final dueDate = DateTime(
+        startDate.year + ((startDate.month + months - 1) ~/ 12),
+        ((startDate.month + months - 1) % 12) + 1,
+        startDate.day,
+      );
+
+      final newLoan = LoanModel(
+        loanID: '',
+        uID: uID,
+        type: type,
+        personName: personName.trim(),
+        principal: principal,
+        interestRate: interestRate,
+        interestType: interestType,
+        months: months,
+        startDate: startDate,
+        dueDate: dueDate,
+        payments: [],
+        status: 'active',
+        notes: notes?.trim(),
+        createdAt: DateTime.now(),
+      );
+
+      final savedLoan = await _firebaseService.addLoan(newLoan);
+      _loans.insert(0, savedLoan);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Error adding loan: $e");
+      return false;
+    }
+  }
+
+  Future<bool> addRepaymentToLoan(String loanID, double amount, {String? note}) async {
+    try {
+      final loanIndex = _loans.indexWhere((l) => l.loanID == loanID);
+      if (loanIndex != -1) {
+        final loan = _loans[loanIndex];
+        final repayment = RepaymentModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          amount: amount,
+          date: DateTime.now(),
+          note: note,
+        );
+
+        final updatedPayments = List<RepaymentModel>.from(loan.payments)..add(repayment);
+        final totalPaid = updatedPayments.fold(0.0, (sum, p) => sum + p.amount);
+        final isPaid = totalPaid >= loan.principal;
+
+        final updatedLoan = loan.copyWith(
+          payments: updatedPayments,
+          status: isPaid ? 'paid' : 'active',
+        );
+
+        await _firebaseService.updateLoan(updatedLoan);
+        _loans[loanIndex] = updatedLoan;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint("Error adding repayment: $e");
+    }
+    return false;
+  }
+
+  Future<bool> toggleLoanStatus(String loanID) async {
+    try {
+      final loanIndex = _loans.indexWhere((l) => l.loanID == loanID);
+      if (loanIndex != -1) {
+        final loan = _loans[loanIndex];
+        final newStatus = loan.status == 'active' ? 'paid' : 'active';
+        final updatedLoan = loan.copyWith(status: newStatus);
+
+        await _firebaseService.updateLoan(updatedLoan);
+        _loans[loanIndex] = updatedLoan;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint("Error toggling loan status: $e");
+    }
+    return false;
+  }
+
+  Future<void> deleteLoan(String loanID) async {
+    try {
+      await _firebaseService.deleteLoan(loanID);
+      _loans.removeWhere((l) => l.loanID == loanID);
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error deleting loan: $e");
+    }
+  }
+
+  // ==========================================
+  // EXPORT HELPERS
+  // ==========================================
+
+  String exportExcelCsvContent() {
+    return ExportService.generateExcelCsv(
+      transactions: _transactions,
+      categories: _categories,
+      jars: _savingJars,
+      loans: _loans,
+      budget: _monthlyBudget,
+      totalIncome: totalIncome,
+      totalExpense: totalExpense,
+      netBalance: mainBalance,
+    );
+  }
+
+  String exportPrintableReportContent() {
+    return ExportService.generatePrintableSummaryReport(
+      transactions: _transactions,
+      categories: _categories,
+      jars: _savingJars,
+      loans: _loans,
+      budget: _monthlyBudget,
+      totalIncome: totalIncome,
+      totalExpense: totalExpense,
+      netBalance: mainBalance,
+    );
   }
 }

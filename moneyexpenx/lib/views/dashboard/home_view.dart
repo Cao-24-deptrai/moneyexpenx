@@ -9,6 +9,9 @@ import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
 import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
+import 'package:moneyexpenx/views/loans/loans_screen.dart';
+import 'package:moneyexpenx/views/loans/interest_calculator_view.dart';
+import 'package:moneyexpenx/views/export/export_report_screen.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -270,6 +273,92 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          // Quick Action Shortcut Buttons (Loans, Interest Calculator, Export Report)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoansScreen()),
+                      );
+                    },
+                    child: GlassContainer(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                      borderRadius: 14,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.account_balance_outlined, color: AppTheme.primaryYellow, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Vay & Nợ',
+                            style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const InterestCalculatorView()),
+                      );
+                    },
+                    child: GlassContainer(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                      borderRadius: 14,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.calculate_outlined, color: AppTheme.primaryYellow, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Tính Lãi',
+                            style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ExportReportScreen()),
+                      );
+                    },
+                    child: GlassContainer(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                      borderRadius: 14,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.file_download_outlined, color: AppTheme.primaryYellow, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Xuất File',
+                            style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
