@@ -29,18 +29,86 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>moneyexpenx</title>
+  <title>MoneyExpenx - Quản lý chi tiêu thông minh</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <div id="loading">
+    <style>
+      body {
+        background-color: #09090B;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      .container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #09090B;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      .logo {
+        margin-bottom: 24px;
+        animation: pulse 2.5s infinite ease-in-out;
+      }
+      .title {
+        color: #F4F4F5;
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        letter-spacing: 1.5px;
+      }
+      .tagline {
+        color: #A1A1AA;
+        font-size: 14px;
+        margin-bottom: 32px;
+        letter-spacing: 0.5px;
+      }
+      .spinner {
+        width: 48px;
+        height: 48px;
+        border: 3.5px solid rgba(255, 215, 0, 0.15);
+        border-radius: 50%;
+        border-top-color: #FFD700;
+        animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.95; }
+        50% { transform: scale(1.08); opacity: 1; }
+      }
+    </style>
+    <div class="container">
+      <!-- Material Icons account_balance_wallet_outlined SVG Path -->
+      <svg class="logo" xmlns="http://www.w3.org/2000/svg" height="88" viewBox="0 -960 960 960" width="88" fill="#FFD700">
+        <path d="M140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h500q24 0 42 18t18 42v10h120q24 0 42 18t18 42v320q0 24-18 42t-42 18H140Zm0-60h680v-320H680v10q0 24-18 42t-42 18H140v250Zm540-380h140v-80H680v80Zm-540 60h480v-200H140v200Zm0 0v-200 200Z"/>
+      </svg>
+      <div class="title">MoneyExpenx</div>
+      <div class="tagline">Quản lý chi tiêu thông minh</div>
+      <div class="spinner"></div>
+    </div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <!-- Remove loading screen when Flutter is ready to draw first frame -->
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loadingDiv = document.getElementById('loading');
+      if (loadingDiv) {
+        loadingDiv.style.transition = 'opacity 0.4s ease';
+        loadingDiv.style.opacity = '0';
+        setTimeout(function() {
+          loadingDiv.remove();
+        }, 400);
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

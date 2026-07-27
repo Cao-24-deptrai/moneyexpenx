@@ -194,11 +194,24 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
                         );
                         final targetAmt = double.tryParse(cleanText) ?? 0.0;
 
-                        if (name.isEmpty || targetAmt <= 0) {
+                        if (name.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Vui lòng nhập thông tin hợp lệ',
+                                'Vui lòng nhập tên hũ mục tiêu',
+                                style: GoogleFonts.beVietnamPro(color: Colors.white),
+                              ),
+                              backgroundColor: AppTheme.alertRed,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (targetAmt < 1000) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Số tiền mục tiêu tối thiểu phải là 1.000 đ',
                                 style: GoogleFonts.beVietnamPro(color: Colors.white),
                               ),
                               backgroundColor: AppTheme.alertRed,
@@ -1349,11 +1362,24 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
                         );
                         final targetAmt = double.tryParse(cleanText) ?? 0.0;
 
-                        if (name.isEmpty || targetAmt <= 0) {
+                        if (name.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Vui lòng nhập thông tin hợp lệ',
+                                'Vui lòng nhập tên hũ mục tiêu',
+                                style: GoogleFonts.beVietnamPro(color: Colors.white),
+                              ),
+                              backgroundColor: AppTheme.alertRed,
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (targetAmt < 1000) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Số tiền mục tiêu tối thiểu phải là 1.000 đ',
                                 style: GoogleFonts.beVietnamPro(color: Colors.white),
                               ),
                               backgroundColor: AppTheme.alertRed,

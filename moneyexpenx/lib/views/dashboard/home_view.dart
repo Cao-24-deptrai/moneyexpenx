@@ -191,31 +191,47 @@ class _HomeViewState extends State<HomeView> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Xin chào,',
-                      style: GoogleFonts.beVietnamPro(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Xin chào,',
+                        style: GoogleFonts.beVietnamPro(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    Text(
-                      authVm.currentUser?.username ?? 'Khách',
-                      style: GoogleFonts.beVietnamPro(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      Text(
+                        authVm.currentUser?.username ?? 'Khách',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white70),
-                  onPressed: () {
-                    authVm.logout();
-                  },
+                const Hero(
+                  tag: 'app_logo_header',
+                  child: Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 36,
+                    color: AppTheme.primaryYellow,
+                  ),
+                ),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.white70),
+                      onPressed: () {
+                        authVm.logout();
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),
