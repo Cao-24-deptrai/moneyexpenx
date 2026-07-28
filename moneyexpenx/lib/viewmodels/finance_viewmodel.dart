@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/data/models/transaction_model.dart';
 import 'package:moneyexpenx/data/models/saving_jar_model.dart';
@@ -535,36 +536,53 @@ class FinanceViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> addRepaymentToLoan(String loanID, double amount, {String? note}) async {
+  Future<String?> addRepaymentToLoan(String loanID, double amount, {String? note}) async {
     try {
       final loanIndex = _loans.indexWhere((l) => l.loanID == loanID);
-      if (loanIndex != -1) {
-        final loan = _loans[loanIndex];
-        final repayment = RepaymentModel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          amount: amount,
-          date: DateTime.now(),
-          note: note,
-        );
-
-        final updatedPayments = List<RepaymentModel>.from(loan.payments)..add(repayment);
-        final totalPaid = updatedPayments.fold(0.0, (sum, p) => sum + p.amount);
-        final isPaid = totalPaid >= loan.principal;
-
-        final updatedLoan = loan.copyWith(
-          payments: updatedPayments,
-          status: isPaid ? 'paid' : 'active',
-        );
-
-        await _firebaseService.updateLoan(updatedLoan);
-        _loans[loanIndex] = updatedLoan;
-        notifyListeners();
-        return true;
+      if (loanIndex == -1) {
+        return "Không tìm thấy khoản vay/nợ!";
       }
+
+      final loan = _loans[loanIndex];
+      final remPayable = loan.remainingPayable;
+
+      if (remPayable <= 0) {
+        return "Khoản này đã được thanh toán hoàn tất!";
+      }
+
+      if (amount <= 0) {
+        return "Số tiền trả phải lớn hơn 0!";
+      }
+
+      if (amount > remPayable) {
+        final fmt = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+        return "Số tiền trả (${fmt.format(amount)}) không được vượt quá số tiền còn lại (${fmt.format(remPayable)})!";
+      }
+
+      final repayment = RepaymentModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        amount: amount,
+        date: DateTime.now(),
+        note: note,
+      );
+
+      final updatedPayments = List<RepaymentModel>.from(loan.payments)..add(repayment);
+      final totalPaid = updatedPayments.fold(0.0, (sum, p) => sum + p.amount);
+      final isPaid = totalPaid >= loan.totalPayable;
+
+      final updatedLoan = loan.copyWith(
+        payments: updatedPayments,
+        status: isPaid ? 'paid' : 'active',
+      );
+
+      await _firebaseService.updateLoan(updatedLoan);
+      _loans[loanIndex] = updatedLoan;
+      notifyListeners();
+      return null;
     } catch (e) {
       debugPrint("Error adding repayment: $e");
+      return "Đã xảy ra lỗi khi lưu trả tiền: ${e.toString()}";
     }
-    return false;
   }
 
   Future<bool> toggleLoanStatus(String loanID) async {
