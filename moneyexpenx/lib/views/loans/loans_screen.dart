@@ -5,11 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
+import 'package:moneyexpenx/core/widgets/custom_numeric_keypad.dart';
 import 'package:moneyexpenx/data/models/loan_model.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
 import 'package:moneyexpenx/views/loans/add_loan_screen.dart';
 import 'package:moneyexpenx/views/loans/interest_calculator_view.dart';
-import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class LoansScreen extends StatefulWidget {
   const LoansScreen({Key? key}) : super(key: key);
@@ -24,116 +24,133 @@ class _LoansScreenState extends State<LoansScreen> {
   final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');
 
   void _showAddRepaymentDialog(LoanModel loan) {
-    final TextEditingController amountController = TextEditingController();
+    String amountStr = '0';
     final TextEditingController noteController = TextEditingController();
     String? errorMessage;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E1E2E),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(
-            loan.type == 'loan' ? 'Thu Tiền Vay từ ${loan.personName}' : 'Trả Tiền Nợ cho ${loan.personName}',
-            style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryYellow.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppTheme.primaryYellow.withOpacity(0.3)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Còn lại phải trả:',
-                      style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 12),
+        builder: (context, setDialogState) {
+          final double currentAmt = double.tryParse(amountStr) ?? 0.0;
+          final formattedAmt = NumberFormat.decimalPattern('vi_VN').format(currentAmt);
+
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E1E2E),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              loan.type == 'loan' ? 'Thu Tiền Vay từ ${loan.personName}' : 'Trả Tiền Nợ cho ${loan.personName}',
+              style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryYellow.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.primaryYellow.withOpacity(0.3)),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Còn lại phải trả:',
+                          style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 12),
+                        ),
+                        Text(
+                          _currencyFormat.format(loan.remainingPayable),
+                          style: GoogleFonts.beVietnamPro(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      '$formattedAmt đ',
+                      style: GoogleFonts.beVietnamPro(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryYellow,
+                      ),
+                    ),
+                  ),
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 8),
                     Text(
-                      _currencyFormat.format(loan.remainingPayable),
-                      style: GoogleFonts.beVietnamPro(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold, fontSize: 13),
+                      errorMessage!,
+                      style: GoogleFonts.beVietnamPro(color: Colors.redAccent, fontSize: 12),
+                      textAlign: TextAlign.center,
                     ),
                   ],
-                ),
+                  const SizedBox(height: 12),
+                  CustomNumericKeypad(
+                    buttonHeight: 42,
+                    fontSize: 18,
+                    padding: const EdgeInsets.all(4),
+                    onKeyPress: (key) {
+                      setDialogState(() {
+                        amountStr = handleNumericKeypadInput(key, amountStr);
+                        errorMessage = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 13),
+                    decoration: InputDecoration(
+                      labelText: 'Ghi chú',
+                      labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 13),
+                      filled: true,
+                      fillColor: Colors.white10,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [ThousandsSeparatorInputFormatter()],
-                style: GoogleFonts.beVietnamPro(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Số tiền trả (VND)',
-                  labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
-                  filled: true,
-                  fillColor: Colors.white10,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  errorText: errorMessage,
-                  errorMaxLines: 2,
-                ),
-                onChanged: (_) {
-                  if (errorMessage != null) {
-                    setDialogState(() => errorMessage = null);
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Hủy', style: GoogleFonts.beVietnamPro(color: Colors.white70)),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final amount = double.tryParse(amountStr) ?? 0.0;
+                  if (amount <= 0) {
+                    setDialogState(() {
+                      errorMessage = 'Vui lòng nhập số tiền hợp lệ lớn hơn 0!';
+                    });
+                    return;
+                  }
+                  if (amount > loan.remainingPayable + 0.01) {
+                    setDialogState(() {
+                      errorMessage = 'Số tiền không được lớn hơn số tiền còn lại (${_currencyFormat.format(loan.remainingPayable)})!';
+                    });
+                    return;
+                  }
+                  final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
+                  final resError = await financeVm.addRepaymentToLoan(loan.loanID, amount, note: noteController.text);
+                  if (resError != null) {
+                    setDialogState(() {
+                      errorMessage = resError;
+                    });
+                  } else {
+                    if (mounted) Navigator.pop(ctx);
                   }
                 },
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: noteController,
-                style: GoogleFonts.beVietnamPro(color: Colors.white),
-                decoration: InputDecoration(
-                  labelText: 'Ghi chú',
-                  labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
-                  filled: true,
-                  fillColor: Colors.white10,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+                child: Text('XÁC NHẬN', style: GoogleFonts.beVietnamPro(color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('Hủy', style: GoogleFonts.beVietnamPro(color: Colors.white70)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final amount = double.tryParse(amountController.text.replaceAll(',', '').replaceAll('.', '')) ?? 0.0;
-                if (amount <= 0) {
-                  setDialogState(() {
-                    errorMessage = 'Vui lòng nhập số tiền hợp lệ lớn hơn 0!';
-                  });
-                  return;
-                }
-                if (amount > loan.remainingPayable) {
-                  setDialogState(() {
-                    errorMessage = 'Số tiền không được lớn hơn số tiền còn lại (${_currencyFormat.format(loan.remainingPayable)})!';
-                  });
-                  return;
-                }
-                final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
-                final resError = await financeVm.addRepaymentToLoan(loan.loanID, amount, note: noteController.text);
-                if (resError != null) {
-                  setDialogState(() {
-                    errorMessage = resError;
-                  });
-                } else {
-                  if (mounted) Navigator.pop(ctx);
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
-              child: Text('XÁC NHẬN', style: GoogleFonts.beVietnamPro(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

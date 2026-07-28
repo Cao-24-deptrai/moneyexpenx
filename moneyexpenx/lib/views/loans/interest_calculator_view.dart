@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
+import 'package:moneyexpenx/core/widgets/custom_numeric_keypad.dart';
 import 'package:moneyexpenx/core/utils/interest_calculator.dart';
-import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class InterestCalculatorView extends StatefulWidget {
   const InterestCalculatorView({Key? key}) : super(key: key);
@@ -15,16 +15,16 @@ class InterestCalculatorView extends StatefulWidget {
 }
 
 class _InterestCalculatorViewState extends State<InterestCalculatorView> {
-  final TextEditingController _principalController = TextEditingController(text: '100.000.000'); // 100,000,000đ default
+  String _principalStr = '100000000'; // 100,000,000đ default
   final TextEditingController _rateController = TextEditingController(text: '10'); // 10% / year default
   final TextEditingController _monthsController = TextEditingController(text: '12'); // 12 months default
 
   String _selectedFormula = 'reducing'; // 'simple', 'compound', 'reducing'
   final NumberFormat _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: '₫');
+  final NumberFormat _formatter = NumberFormat.decimalPattern('vi_VN');
 
   @override
   void dispose() {
-    _principalController.dispose();
     _rateController.dispose();
     _monthsController.dispose();
     super.dispose();
@@ -32,9 +32,10 @@ class _InterestCalculatorViewState extends State<InterestCalculatorView> {
 
   @override
   Widget build(BuildContext context) {
-    final double principal = double.tryParse(_principalController.text.replaceAll(',', '').replaceAll('.', '')) ?? 0.0;
+    final double principal = double.tryParse(_principalStr) ?? 0.0;
     final double rate = double.tryParse(_rateController.text) ?? 0.0;
     final int months = int.tryParse(_monthsController.text) ?? 1;
+    final formattedPrincipal = _formatter.format(principal);
 
     double totalPayable = 0.0;
     double interestAmount = 0.0;
@@ -69,32 +70,37 @@ class _InterestCalculatorViewState extends State<InterestCalculatorView> {
         elevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Inputs card
-              GlassContainer(
-                borderRadius: 20,
-                padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Thông số khoản vay',
-                      style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    Center(
+                      child: Text(
+                        '$formattedPrincipal đ',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryYellow,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 14),
-
-                    // Principal amount input
-                    _buildTextField(
-                      controller: _principalController,
-                      label: 'Số tiền vay (VND)',
-                      icon: Icons.monetization_on_outlined,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [ThousandsSeparatorInputFormatter()],
-                    ),
+                    const SizedBox(height: 16),
+                    // Inputs card
+                    GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Thông số khoản vay',
+                            style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                          ),
+                          const SizedBox(height: 14),
 
                     const SizedBox(height: 12),
 
@@ -289,8 +295,20 @@ class _InterestCalculatorViewState extends State<InterestCalculatorView> {
           ),
         ),
       ),
-    );
-  }
+          CustomNumericKeypad(
+            buttonHeight: 46,
+            fontSize: 20,
+            onKeyPress: (key) {
+              setState(() {
+                _principalStr = handleNumericKeypadInput(key, _principalStr);
+              });
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildTextField({
     required TextEditingController controller,

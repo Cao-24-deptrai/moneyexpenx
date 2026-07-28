@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
+import 'package:moneyexpenx/core/widgets/custom_numeric_keypad.dart';
 import 'package:moneyexpenx/data/models/saving_jar_model.dart';
 import 'package:moneyexpenx/data/models/user_model.dart';
 import 'package:moneyexpenx/data/services/firebase_service.dart';
@@ -71,7 +72,7 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
   void _showAddJarSheet() {
     _selectedTargetDate = DateTime.now().add(const Duration(days: 30));
     _nameController.clear();
-    _targetAmtController.clear();
+    String targetAmtStr = '0';
 
     showModalBottomSheet(
       context: context,
@@ -80,6 +81,9 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final double currentAmt = double.tryParse(targetAmtStr) ?? 0.0;
+            final formattedAmt = formatter.format(currentAmt);
+
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -88,171 +92,175 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
                 borderRadius: 24,
                 color: Colors.black.withOpacity(0.85),
                 borderColor: AppTheme.primaryYellow.withOpacity(0.3),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Thêm Hũ Tiết Kiệm',
+                padding: const EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Thêm Hũ Tiết Kiệm',
+                            style: GoogleFonts.beVietnamPro(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryYellow,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _nameController,
+                        style: GoogleFonts.beVietnamPro(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'Tên hũ mục tiêu',
+                          labelStyle: GoogleFonts.beVietnamPro(
+                            color: AppTheme.textSecondary,
+                          ),
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: BorderSide(color: AppTheme.primaryYellow),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Text(
+                          '$formattedAmt đ',
                           style: GoogleFonts.beVietnamPro(
-                            fontSize: 20,
+                            fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primaryYellow,
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _nameController,
-                      style: GoogleFonts.beVietnamPro(color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: 'Tên hũ mục tiêu',
-                        labelStyle: GoogleFonts.beVietnamPro(
-                          color: AppTheme.textSecondary,
-                        ),
-                        focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: AppTheme.primaryYellow),
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _targetAmtController,
-                      keyboardType: TextInputType.number,
-                      style: GoogleFonts.beVietnamPro(color: Colors.white),
-                      inputFormatters: [ThousandsSeparatorInputFormatter()],
-                      decoration: InputDecoration(
-                        labelText: 'Số tiền mục tiêu (đ)',
-                        labelStyle: GoogleFonts.beVietnamPro(
-                          color: AppTheme.textSecondary,
-                        ),
-                        focusedBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: AppTheme.primaryYellow),
-                        ),
+                      const SizedBox(height: 12),
+                      CustomNumericKeypad(
+                        buttonHeight: 40,
+                        fontSize: 18,
+                        padding: const EdgeInsets.all(4),
+                        onKeyPress: (key) {
+                          setModalState(() {
+                            targetAmtStr = handleNumericKeypadInput(key, targetAmtStr);
+                          });
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    // Target date picker
-                    GestureDetector(
-                      onTap: () => _selectTargetDate(context, setModalState),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey[800]!),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Ngày hoàn thành mục tiêu:',
-                              style: GoogleFonts.beVietnamPro(
-                                color: AppTheme.textSecondary,
-                              ),
+                      const SizedBox(height: 16),
+                      // Target date picker
+                      GestureDetector(
+                        onTap: () => _selectTargetDate(context, setModalState),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey[800]!),
                             ),
-                            Row(
-                              children: [
-                                Text(
-                                  DateFormat(
-                                    'dd/MM/yyyy',
-                                  ).format(_selectedTargetDate),
-                                  style: GoogleFonts.beVietnamPro(
-                                    color: AppTheme.primaryYellow,
-                                    fontWeight: FontWeight.bold,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Ngày hoàn thành mục tiêu:',
+                                style: GoogleFonts.beVietnamPro(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    DateFormat('dd/MM/yyyy').format(_selectedTargetDate),
+                                    style: GoogleFonts.beVietnamPro(
+                                      color: AppTheme.primaryYellow,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.calendar_today,
-                                  color: AppTheme.primaryYellow,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    GlassCardButton(
-                      color: AppTheme.primaryYellow,
-                      onTap: () async {
-                        final name = _nameController.text.trim();
-                        final cleanText = _targetAmtController.text.replaceAll(
-                          RegExp(r'[^\d]'),
-                          '',
-                        );
-                        final targetAmt = double.tryParse(cleanText) ?? 0.0;
-
-                        if (name.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Vui lòng nhập tên hũ mục tiêu',
-                                style: GoogleFonts.beVietnamPro(color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    color: AppTheme.primaryYellow,
+                                    size: 16,
+                                  ),
+                                ],
                               ),
-                              backgroundColor: AppTheme.alertRed,
-                            ),
-                          );
-                          return;
-                        }
-
-                        if (targetAmt < 1000) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Số tiền mục tiêu tối thiểu phải là 1.000 đ',
-                                style: GoogleFonts.beVietnamPro(color: Colors.white),
-                              ),
-                              backgroundColor: AppTheme.alertRed,
-                            ),
-                          );
-                          return;
-                        }
-
-                        final authVm = Provider.of<AuthViewModel>(
-                          context,
-                          listen: false,
-                        );
-                        final financeVm = Provider.of<FinanceViewModel>(
-                          context,
-                          listen: false,
-                        );
-
-                        final success = await financeVm.addSavingJar(
-                          uID: authVm.currentUser!.uID,
-                          name: name,
-                          targetAmt: targetAmt,
-                          targetDate: _selectedTargetDate,
-                        );
-
-                        if (success) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Container(
-                        height: 48,
-                        alignment: Alignment.center,
-                        child: Text(
-                          'TẠO HŨ TIẾT KIỆM',
-                          style: GoogleFonts.beVietnamPro(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      GlassCardButton(
+                        color: AppTheme.primaryYellow,
+                        onTap: () async {
+                          final name = _nameController.text.trim();
+                          final targetAmt = double.tryParse(targetAmtStr) ?? 0.0;
+
+                          if (name.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Vui lòng nhập tên hũ mục tiêu',
+                                  style: GoogleFonts.beVietnamPro(color: Colors.white),
+                                ),
+                                backgroundColor: AppTheme.alertRed,
+                              ),
+                            );
+                            return;
+                          }
+
+                          if (targetAmt < 1000) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Số tiền mục tiêu tối thiểu phải là 1.000 đ',
+                                  style: GoogleFonts.beVietnamPro(color: Colors.white),
+                                ),
+                                backgroundColor: AppTheme.alertRed,
+                              ),
+                            );
+                            return;
+                          }
+
+                          final authVm = Provider.of<AuthViewModel>(
+                            context,
+                            listen: false,
+                          );
+                          final financeVm = Provider.of<FinanceViewModel>(
+                            context,
+                            listen: false,
+                          );
+
+                          final success = await financeVm.addSavingJar(
+                            uID: authVm.currentUser!.uID,
+                            name: name,
+                            targetAmt: targetAmt,
+                            targetDate: _selectedTargetDate,
+                          );
+
+                          if (success) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: Container(
+                          height: 48,
+                          alignment: Alignment.center,
+                          child: Text(
+                            'TẠO HŨ TIẾT KIỆM',
+                            style: GoogleFonts.beVietnamPro(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -263,178 +271,211 @@ class _SavingJarsScreenState extends State<SavingJarsScreen> {
   }
 
   void _showDepositDialog(SavingJarModel jar) {
-    _depositController.clear();
+    String depositAmtStr = '0';
     final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppTheme.cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Nạp Tiền Vào Hũ',
-            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Số dư khả dụng: ${formatter.format(financeVm.mainBalance)} đ',
-                style: GoogleFonts.beVietnamPro(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _depositController,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.beVietnamPro(color: Colors.white),
-                inputFormatters: [ThousandsSeparatorInputFormatter()],
-                decoration: const InputDecoration(
-                  labelText: 'Số tiền nạp (đ)',
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryYellow),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white)),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: Text(
-                'NẠP',
-                style: GoogleFonts.beVietnamPro(
-                  color: AppTheme.primaryYellow,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onPressed: () async {
-                final cleanText = _depositController.text.replaceAll(
-                  RegExp(r'[^\d]'),
-                  '',
-                );
-                final amt = double.tryParse(cleanText) ?? 0.0;
-                if (amt <= 0) return;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final double currentAmt = double.tryParse(depositAmtStr) ?? 0.0;
+            final formattedAmt = formatter.format(currentAmt);
 
-                if (amt > financeVm.mainBalance) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Số dư chính không đủ để nạp!',
-                        style: GoogleFonts.beVietnamPro(color: Colors.white),
+            return AlertDialog(
+              backgroundColor: AppTheme.cardBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Nạp Tiền Vào Hũ',
+                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Số dư khả dụng: ${formatter.format(financeVm.mainBalance)} đ',
+                      style: GoogleFonts.beVietnamPro(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
                       ),
-                      backgroundColor: AppTheme.alertRed,
+                      textAlign: TextAlign.center,
                     ),
-                  );
-                  return;
-                }
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        '$formattedAmt đ',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryYellow,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    CustomNumericKeypad(
+                      buttonHeight: 42,
+                      fontSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      onKeyPress: (key) {
+                        setDialogState(() {
+                          depositAmtStr = handleNumericKeypadInput(key, depositAmtStr);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white70)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+                  child: Text(
+                    'NẠP',
+                    style: GoogleFonts.beVietnamPro(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () async {
+                    final amt = double.tryParse(depositAmtStr) ?? 0.0;
+                    if (amt <= 0) return;
 
-                final success = await financeVm.depositToJar(jar.jarID, amt);
-                if (success && mounted) {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
+                    if (amt > financeVm.mainBalance) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Số dư chính không đủ để nạp!',
+                            style: GoogleFonts.beVietnamPro(color: Colors.white),
+                          ),
+                          backgroundColor: AppTheme.alertRed,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final success = await financeVm.depositToJar(jar.jarID, amt);
+                    if (success && mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
 
   void _showWithdrawDialog(SavingJarModel jar) {
-    _withdrawController.clear();
+    String withdrawAmtStr = '0';
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppTheme.cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Rút Tiền Khỏi Hũ',
-            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Đang có trong hũ: ${formatter.format(jar.currentAmt)} đ',
-                style: GoogleFonts.beVietnamPro(
-                  color: AppTheme.textSecondary,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _withdrawController,
-                keyboardType: TextInputType.number,
-                style: GoogleFonts.beVietnamPro(color: Colors.white),
-                inputFormatters: [ThousandsSeparatorInputFormatter()],
-                decoration: const InputDecoration(
-                  labelText: 'Số tiền rút (đ)',
-                  focusedBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: AppTheme.primaryYellow),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white)),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: Text(
-                'RÚT',
-                style: GoogleFonts.beVietnamPro(
-                  color: AppTheme.primaryYellow,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onPressed: () async {
-                final cleanText = _withdrawController.text.replaceAll(
-                  RegExp(r'[^\d]'),
-                  '',
-                );
-                final amt = double.tryParse(cleanText) ?? 0.0;
-                if (amt <= 0) return;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final double currentAmt = double.tryParse(withdrawAmtStr) ?? 0.0;
+            final formattedAmt = formatter.format(currentAmt);
 
-                if (amt > jar.currentAmt) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Số tiền trong hũ không đủ!',
-                        style: GoogleFonts.beVietnamPro(color: Colors.white),
+            return AlertDialog(
+              backgroundColor: AppTheme.cardBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Rút Tiền Khỏi Hũ',
+                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Đang có trong hũ: ${formatter.format(jar.currentAmt)} đ',
+                      style: GoogleFonts.beVietnamPro(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
                       ),
-                      backgroundColor: AppTheme.alertRed,
+                      textAlign: TextAlign.center,
                     ),
-                  );
-                  return;
-                }
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Text(
+                        '$formattedAmt đ',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryYellow,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    CustomNumericKeypad(
+                      buttonHeight: 42,
+                      fontSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      onKeyPress: (key) {
+                        setDialogState(() {
+                          withdrawAmtStr = handleNumericKeypadInput(key, withdrawAmtStr);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white70)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+                  child: Text(
+                    'RÚT',
+                    style: GoogleFonts.beVietnamPro(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () async {
+                    final amt = double.tryParse(withdrawAmtStr) ?? 0.0;
+                    if (amt <= 0) return;
 
-                final financeVm = Provider.of<FinanceViewModel>(
-                  context,
-                  listen: false,
-                );
-                final success = await financeVm.withdrawFromJar(jar.jarID, amt);
-                if (success && mounted) {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
+                    if (amt > jar.currentAmt) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Số tiền trong hũ không đủ!',
+                            style: GoogleFonts.beVietnamPro(color: Colors.white),
+                          ),
+                          backgroundColor: AppTheme.alertRed,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final financeVm = Provider.of<FinanceViewModel>(
+                      context,
+                      listen: false,
+                    );
+                    final success = await financeVm.withdrawFromJar(jar.jarID, amt);
+                    if (success && mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );

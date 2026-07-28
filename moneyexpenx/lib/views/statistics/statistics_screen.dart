@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/core/constants/icons.dart';
@@ -64,62 +62,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
     }
 
     return allTx.where((tx) => tx.tsDate.isAfter(startDate) || tx.tsDate.isAtSameMomentAs(startDate)).toList();
-  }
-
-  // Export report to CSV (Excel compatible)
-  Future<void> _exportReport(
-      List<TransactionModel> txs, List<CategoryModel> categories, String type) async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final dateStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-      final filePath = '${directory.path}/BaoCao_ThuChi_${type}_$dateStr.csv';
-      final file = File(filePath);
-
-      // CSV Header
-      StringBuffer csvContent = StringBuffer();
-      // Add UTF-8 BOM for Excel compatibility with Vietnamese characters
-      csvContent.write('\uFEFF');
-      csvContent.writeln('Mã Giao Dịch,Ngày,Loại,Danh Mục,Số Tiền (đ),Ghi Chú');
-
-      for (var tx in txs) {
-        final cat = categories.firstWhere(
-          (c) => c.ctgID == tx.ctgID,
-          orElse: () => CategoryModel(ctgID: '', uID: '', name: 'Không rõ', type: type, iconKey: 'payment'),
-        );
-
-        if (cat.type == type) {
-          final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(tx.tsDate);
-          final note = tx.note.replaceAll(',', ';'); // avoid breaking columns
-          csvContent.writeln('${tx.tsID},$formattedDate,${cat.type},${cat.name},${tx.amt},$note');
-        }
-      }
-
-      await file.writeAsString(csvContent.toString());
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Đã xuất báo cáo thành công!\nĐường dẫn: $filePath',
-              style: GoogleFonts.beVietnamPro(color: Colors.white),
-            ),
-            backgroundColor: AppTheme.successGreen,
-            duration: const Duration(seconds: 5),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi xuất báo cáo: $e', style: GoogleFonts.beVietnamPro(color: Colors.white)),
-            backgroundColor: AppTheme.alertRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 
   @override

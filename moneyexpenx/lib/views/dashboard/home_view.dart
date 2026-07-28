@@ -4,14 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
+import 'package:moneyexpenx/core/widgets/custom_numeric_keypad.dart';
 import 'package:moneyexpenx/core/constants/icons.dart';
 import 'package:moneyexpenx/data/models/category_model.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
-import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
-import 'package:moneyexpenx/views/loans/loans_screen.dart';
-import 'package:moneyexpenx/views/loans/interest_calculator_view.dart';
-import 'package:moneyexpenx/views/export/export_report_screen.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -100,69 +97,85 @@ class _HomeViewState extends State<HomeView> {
     final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
     final authVm = Provider.of<AuthViewModel>(context, listen: false);
 
-    if (financeVm.monthlyBudget != null) {
-      _budgetController.text = formatter.format(
-        financeVm.monthlyBudget!.limitAmt,
-      );
-    } else {
-      _budgetController.clear();
-    }
+    String budgetStr = financeVm.monthlyBudget != null
+        ? financeVm.monthlyBudget!.limitAmt.toInt().toString()
+        : '0';
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppTheme.cardBg,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text(
-            'Thiết Lập Ngân Sách',
-            style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold),
-          ),
-          content: TextField(
-            controller: _budgetController,
-            keyboardType: TextInputType.number,
-            style: GoogleFonts.beVietnamPro(color: Colors.white),
-            inputFormatters: [ThousandsSeparatorInputFormatter()],
-            decoration: const InputDecoration(
-              labelText: 'Hạn mức chi tiêu tháng (đ)',
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppTheme.primaryYellow),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final double currentAmt = double.tryParse(budgetStr) ?? 0.0;
+            final formattedAmt = formatter.format(currentAmt);
+
+            return AlertDialog(
+              backgroundColor: AppTheme.cardBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white)),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: Text(
-                'CẬP NHẬT',
-                style: GoogleFonts.beVietnamPro(
-                  color: AppTheme.primaryYellow,
-                  fontWeight: FontWeight.bold,
+              title: Text(
+                'Thiết Lập Ngân Sách Tháng',
+                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Text(
+                        '$formattedAmt đ',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryYellow,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    CustomNumericKeypad(
+                      buttonHeight: 42,
+                      fontSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      onKeyPress: (key) {
+                        setDialogState(() {
+                          budgetStr = handleNumericKeypadInput(key, budgetStr);
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-              onPressed: () async {
-                final cleanText = _budgetController.text.replaceAll(
-                  RegExp(r'[^\d]'),
-                  '',
-                );
-                final limit = double.tryParse(cleanText) ?? 0.0;
-                if (limit <= 0) return;
+              actions: [
+                TextButton(
+                  child: Text('HỦY', style: GoogleFonts.beVietnamPro(color: Colors.white70)),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+                  child: Text(
+                    'CẬP NHẬT',
+                    style: GoogleFonts.beVietnamPro(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () async {
+                    final limit = double.tryParse(budgetStr) ?? 0.0;
+                    if (limit <= 0) return;
 
-                final success = await financeVm.setMonthlyBudget(
-                  limit,
-                  authVm.currentUser!.uID,
-                );
-                if (success && mounted) {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-          ],
+                    final success = await financeVm.setMonthlyBudget(
+                      limit,
+                      authVm.currentUser!.uID,
+                    );
+                    if (success && mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ],
+            );
+          },
         );
       },
     );

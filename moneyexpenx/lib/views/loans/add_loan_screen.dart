@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
+import 'package:moneyexpenx/core/widgets/custom_numeric_keypad.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
-import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class AddLoanScreen extends StatefulWidget {
   final String initialType; // 'loan' or 'debt'
@@ -20,7 +20,7 @@ class AddLoanScreen extends StatefulWidget {
 class _AddLoanScreenState extends State<AddLoanScreen> {
   late String _type; // 'loan' (Cho vay) or 'debt' (Đi vay)
   final TextEditingController _personNameController = TextEditingController();
-  final TextEditingController _principalController = TextEditingController();
+  String _principalStr = '0';
   final TextEditingController _interestRateController = TextEditingController(text: '0');
   final TextEditingController _monthsController = TextEditingController(text: '12');
   final TextEditingController _notesController = TextEditingController();
@@ -28,6 +28,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
   DateTime _startDate = DateTime.now();
   String _interestType = 'simple'; // 'simple', 'compound', 'reducing'
   bool _isSubmitting = false;
+  final NumberFormat _formatter = NumberFormat.decimalPattern('vi_VN');
 
   @override
   void initState() {
@@ -38,11 +39,14 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
   @override
   void dispose() {
     _personNameController.dispose();
-    _principalController.dispose();
     _interestRateController.dispose();
     _monthsController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  double get _principalDouble {
+    return double.tryParse(_principalStr) ?? 0.0;
   }
 
   Future<void> _submit() async {
@@ -50,7 +54,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
     final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
 
     final personName = _personNameController.text.trim();
-    final principal = double.tryParse(_principalController.text.replaceAll(',', '').replaceAll('.', '')) ?? 0.0;
+    final principal = _principalDouble;
     final interestRate = double.tryParse(_interestRateController.text) ?? 0.0;
     final months = int.tryParse(_monthsController.text) ?? 1;
 
@@ -59,7 +63,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
       return;
     }
     if (principal <= 0) {
-      _showError('Số tiền phải lớn hơn 0!');
+      _showError('Số tiền gốc phải lớn hơn 0!');
       return;
     }
 
@@ -94,6 +98,8 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final formattedAmt = _formatter.format(_principalDouble);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -102,206 +108,218 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check, color: AppTheme.primaryYellow, size: 28),
+            onPressed: _isSubmitting ? null : _submit,
+          ),
+        ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Type Selector (Cho vay vs Đi vay)
-              GlassContainer(
-                borderRadius: 16,
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _type = 'loan'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: _type == 'loan' ? Colors.green : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Tôi Cho Vay (+)',
-                            style: GoogleFonts.beVietnamPro(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _type = 'debt'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: _type == 'debt' ? Colors.redAccent : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Tôi Đi Vay (-)',
-                            style: GoogleFonts.beVietnamPro(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Inputs Card
-              GlassContainer(
-                borderRadius: 20,
-                padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildTextField(
-                      controller: _personNameController,
-                      label: _type == 'loan' ? 'Tên người vay' : 'Tên chủ nợ / Ngân hàng',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      controller: _principalController,
-                      label: 'Số tiền gốc (VND)',
-                      icon: Icons.monetization_on_outlined,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [ThousandsSeparatorInputFormatter()],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildTextField(
-                            controller: _interestRateController,
-                            label: 'Lãi suất (% / năm)',
-                            icon: Icons.percent,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildTextField(
-                            controller: _monthsController,
-                            label: 'Thời hạn (Tháng)',
-                            icon: Icons.calendar_month,
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Interest Type Selector
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Loại lãi suất',
-                          style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            _buildTypeChip('Lãi đơn', 'simple'),
-                            const SizedBox(width: 8),
-                            _buildTypeChip('Lãi kép', 'compound'),
-                            const SizedBox(width: 8),
-                            _buildTypeChip('Dư nợ giảm dần', 'reducing'),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Date Picker
-                    GestureDetector(
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _startDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2035),
-                        );
-                        if (picked != null) {
-                          setState(() => _startDate = picked);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.date_range, color: AppTheme.primaryYellow, size: 20),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Ngày bắt đầu:',
-                                  style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 13),
+                    // Type Selector
+                    GlassContainer(
+                      borderRadius: 16,
+                      padding: const EdgeInsets.all(4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _type = 'loan'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: _type == 'loan' ? Colors.green : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              ],
+                                child: Text(
+                                  'Tôi Cho Vay (+)',
+                                  style: GoogleFonts.beVietnamPro(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ),
-                            Text(
-                              DateFormat('dd/MM/yyyy').format(_startDate),
-                              style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setState(() => _type = 'debt'),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: _type == 'debt' ? Colors.redAccent : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Tôi Đi Vay (-)',
+                                  style: GoogleFonts.beVietnamPro(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
 
-                    const SizedBox(height: 12),
-                    _buildTextField(
-                      controller: _notesController,
-                      label: 'Ghi chú (không bắt buộc)',
-                      icon: Icons.note_outlined,
+                    const SizedBox(height: 20),
+
+                    // Display Amount Big Text
+                    Center(
+                      child: Text(
+                        '$formattedAmt đ',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryYellow,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
+
+                    const SizedBox(height: 20),
+
+                    // Inputs Card
+                    GlassContainer(
+                      borderRadius: 20,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            controller: _personNameController,
+                            label: _type == 'loan' ? 'Tên người vay' : 'Tên chủ nợ / Ngân hàng',
+                            icon: Icons.person_outline,
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: _interestRateController,
+                                  label: 'Lãi suất (% / năm)',
+                                  icon: Icons.percent,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildTextField(
+                                  controller: _monthsController,
+                                  label: 'Thời hạn (Tháng)',
+                                  icon: Icons.calendar_month,
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Interest Type Selector
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Loại lãi suất',
+                                style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  _buildTypeChip('Lãi đơn', 'simple'),
+                                  const SizedBox(width: 8),
+                                  _buildTypeChip('Lãi kép', 'compound'),
+                                  const SizedBox(width: 8),
+                                  _buildTypeChip('Dư nợ giảm dần', 'reducing'),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Date Picker
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _startDate,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2035),
+                              );
+                              if (picked != null) {
+                                setState(() => _startDate = picked);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.date_range, color: AppTheme.primaryYellow, size: 20),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'Ngày bắt đầu:',
+                                        style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    DateFormat('dd/MM/yyyy').format(_startDate),
+                                    style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            controller: _notesController,
+                            label: 'Ghi chú (không bắt buộc)',
+                            icon: Icons.note_outlined,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
+            ),
 
-              const SizedBox(height: 20),
-
-              // Submit button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryYellow,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  ),
-                  child: _isSubmitting
-                      ? const CircularProgressIndicator(color: Colors.black)
-                      : Text(
-                          'LƯU KHOẢN VAY',
-                          style: GoogleFonts.beVietnamPro(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                ),
-              ),
-            ],
-          ),
+            // Custom Keypad at bottom
+            CustomNumericKeypad(
+              buttonHeight: 48,
+              fontSize: 20,
+              onKeyPress: (key) {
+                setState(() {
+                  _principalStr = handleNumericKeypadInput(key, _principalStr);
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
