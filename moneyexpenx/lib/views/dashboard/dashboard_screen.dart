@@ -4,6 +4,7 @@ import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/views/dashboard/home_view.dart';
 import 'package:moneyexpenx/views/saving_jars/saving_jars_screen.dart';
+import 'package:moneyexpenx/views/loans/loans_screen.dart';
 import 'package:moneyexpenx/views/statistics/statistics_screen.dart';
 import 'package:moneyexpenx/views/categories/categories_screen.dart';
 import 'package:moneyexpenx/views/transactions/add_transaction_screen.dart';
@@ -23,6 +24,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _pages = [
     const HomeView(),
     const SavingJarsScreen(),
+    const LoansScreen(),
     const StatisticsScreen(),
     const CategoriesScreen(),
     const ProfileScreen(),
@@ -68,13 +70,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           // Floating Glassmorphism Bottom Navigation Bar
           Positioned(
-            left: 16,
-            right: 16,
+            left: 12,
+            right: 12,
             bottom: 16,
             child: GlassContainer(
               height: 64,
               borderRadius: 20,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               color: Colors.black.withOpacity(0.5),
               borderColor: Colors.white.withOpacity(0.08),
               child: Row(
@@ -94,18 +96,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   _buildNavItem(
                     index: 2,
+                    icon: Icons.account_balance_outlined,
+                    activeIcon: Icons.account_balance,
+                    label: 'Vay & Nợ',
+                  ),
+                  _buildNavItem(
+                    index: 3,
                     icon: Icons.bar_chart_outlined,
                     activeIcon: Icons.bar_chart,
                     label: 'Thống kê',
                   ),
                   _buildNavItem(
-                    index: 3,
+                    index: 4,
                     icon: Icons.category_outlined,
                     activeIcon: Icons.category,
                     label: 'Danh mục',
                   ),
                   _buildNavItem(
-                    index: 4,
+                    index: 5,
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     label: 'Tài khoản',

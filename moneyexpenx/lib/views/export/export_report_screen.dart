@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
@@ -16,13 +20,60 @@ class ExportReportScreen extends StatefulWidget {
 class _ExportReportScreenState extends State<ExportReportScreen> {
   int _selectedFormatIndex = 0; // 0 = Excel/CSV, 1 = Printable PDF/Text
   bool _copied = false;
+  bool _isSaving = false;
+
+  Future<void> _saveFileToDevice(String content, bool isCsv) async {
+    setState(() => _isSaving = true);
+    try {
+      Directory? dir;
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        dir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+      } else {
+        dir = await getApplicationDocumentsDirectory();
+      }
+
+      final dateStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final extension = isCsv ? 'csv' : 'txt';
+      final fileName = 'Bao_Cao_Tai_Chinh_MoneyExpenx_$dateStr.$extension';
+      final file = File('${dir.path}/$fileName');
+
+      await file.writeAsString(content, encoding: utf8);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '🎉 Đã lưu file thành công!\nĐường dẫn: ${file.path}',
+              style: GoogleFonts.beVietnamPro(color: Colors.white, fontWeight: FontWeight.w600),
+            ),
+            backgroundColor: AppTheme.successGreen,
+            duration: const Duration(seconds: 6),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi khi lưu file: $e', style: GoogleFonts.beVietnamPro(color: Colors.white)),
+            backgroundColor: AppTheme.alertRed,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final financeVm = Provider.of<FinanceViewModel>(context);
     final csvContent = financeVm.exportExcelCsvContent();
     final reportContent = financeVm.exportPrintableReportContent();
-    final currentContent = _selectedFormatIndex == 0 ? csvContent : reportContent;
+    final isCsvMode = _selectedFormatIndex == 0;
+    final currentContent = isCsvMode ? csvContent : reportContent;
 
     return Scaffold(
       appBar: AppBar(
@@ -218,10 +269,46 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
 
               const SizedBox(height: 16),
 
-              // Action Buttons
+              // Action Buttons Row (Tải file về máy + Sao chép nội dung)
               Row(
                 children: [
+                  // 1. Download File Button
                   Expanded(
+                    flex: 3,
+                    child: ElevatedButton.icon(
+                      onPressed: _isSaving ? null : () => _saveFileToDevice(currentContent, isCsvMode),
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            )
+                          : const Icon(Icons.download_rounded, color: Colors.black, size: 20),
+                      label: Text(
+                        _isSaving
+                            ? 'Đang Lưu...'
+                            : (isCsvMode ? 'TẢI FILE EXCEL (.csv)' : 'TẢI FILE VĂN BẢN (.txt)'),
+                        style: GoogleFonts.beVietnamPro(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryYellow,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  // 2. Copy Button
+                  Expanded(
+                    flex: 2,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: currentContent));
@@ -231,7 +318,7 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              _selectedFormatIndex == 0
+                              isCsvMode
                                   ? 'Đã sao chép nội dung Excel/CSV vào bộ nhớ tạm!'
                                   : 'Đã sao chép nội dung Báo cáo PDF/Text vào bộ nhớ tạm!',
                             ),
@@ -239,16 +326,17 @@ class _ExportReportScreenState extends State<ExportReportScreen> {
                           ),
                         );
                       },
-                      icon: Icon(_copied ? Icons.check : Icons.copy, color: Colors.black, size: 18),
+                      icon: Icon(_copied ? Icons.check : Icons.copy, color: Colors.white, size: 16),
                       label: Text(
-                        _copied ? 'Đã Sao Chép' : 'Sao Chép Nội Dung',
+                        _copied ? 'Đã Chép' : 'Sao Chép',
                         style: GoogleFonts.beVietnamPro(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryYellow,
+                        backgroundColor: Colors.white.withOpacity(0.12),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),

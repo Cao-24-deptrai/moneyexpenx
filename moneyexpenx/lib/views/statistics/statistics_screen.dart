@@ -160,16 +160,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
             Tab(text: 'KHOẢN THU'),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download_outlined, color: AppTheme.primaryYellow, size: 26),
-            onPressed: () {
-              final activeType = _typeTabController.index == 0 ? 'Chi' : 'Thu';
-              _exportReport(filteredTxs, categories, activeType);
-            },
-            tooltip: 'Xuất file Excel CSV',
-          ),
-        ],
       ),
       body: Column(
         children: [

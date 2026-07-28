@@ -61,7 +61,7 @@ class ExportService {
       csv.writeln('=== HŨ TIẾT KIỆM ===');
       csv.writeln('Tên Hũ;Đã Tích Lũy (VND);Mục Tiêu (VND);Tiến Độ (%);Hạn Hoàn Thành;Trạng Thái');
       for (var jar in jars) {
-        final progress = (jar.progressRatio * 100).toStringAsFixed(1);
+        final progress = (jar.progressPercent * 100).toStringAsFixed(1);
         final statusText = jar.status == 'completed' ? 'Đã hoàn thành' : 'Đang tích lũy';
         csv.writeln('${jar.name};${jar.currentAmt.toStringAsFixed(0)};${jar.targetAmt.toStringAsFixed(0)};$progress%;${_dayFormat.format(jar.targetDate)};$statusText');
       }
@@ -143,7 +143,7 @@ class ExportService {
     if (jars.isNotEmpty) {
       doc.writeln('📌 3. HŨ TIẾT KIỆM TÍCH LŨY');
       for (var jar in jars) {
-        final pct = (jar.progressRatio * 100).toStringAsFixed(1);
+        final pct = (jar.progressPercent * 100).toStringAsFixed(1);
         doc.writeln('  • ${jar.name}: ${_currencyFormat.format(jar.currentAmt)} / ${_currencyFormat.format(jar.targetAmt)} ($pct%)');
       }
       doc.writeln();

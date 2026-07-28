@@ -348,9 +348,10 @@ class FirebaseService {
       QuerySnapshot snap = await FirebaseFirestore.instance
           .collection('loans')
           .where('uID', isEqualTo: uID)
-          .orderBy('createdAt', descending: true)
           .get();
-      return snap.docs.map((doc) => LoanModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      final loans = snap.docs.map((doc) => LoanModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      loans.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return loans;
     } catch (e) {
       debugPrint("Error fetching loans: $e");
       return [];
@@ -369,6 +370,6 @@ class FirebaseService {
   }
 
   Future<void> deleteLoan(String loanID) async {
-    await FirebaseFirestore.instance.collection('loans').doc(loan.loanID).delete();
+    await FirebaseFirestore.instance.collection('loans').doc(loanID).delete();
   }
 }

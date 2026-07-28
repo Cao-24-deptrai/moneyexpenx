@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
+import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class AddLoanScreen extends StatefulWidget {
   final String initialType; // 'loan' or 'debt'
@@ -178,6 +180,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
                       label: 'Số tiền gốc (VND)',
                       icon: Icons.monetization_on_outlined,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [ThousandsSeparatorInputFormatter()],
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -309,10 +312,12 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,

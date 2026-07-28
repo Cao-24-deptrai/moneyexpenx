@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
 import 'package:moneyexpenx/core/widgets/glass_container.dart';
 import 'package:moneyexpenx/core/utils/interest_calculator.dart';
+import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class InterestCalculatorView extends StatefulWidget {
   const InterestCalculatorView({Key? key}) : super(key: key);
@@ -13,7 +15,7 @@ class InterestCalculatorView extends StatefulWidget {
 }
 
 class _InterestCalculatorViewState extends State<InterestCalculatorView> {
-  final TextEditingController _principalController = TextEditingController(text: '100000000'); // 100,000,000đ default
+  final TextEditingController _principalController = TextEditingController(text: '100.000.000'); // 100,000,000đ default
   final TextEditingController _rateController = TextEditingController(text: '10'); // 10% / year default
   final TextEditingController _monthsController = TextEditingController(text: '12'); // 12 months default
 
@@ -91,6 +93,7 @@ class _InterestCalculatorViewState extends State<InterestCalculatorView> {
                       label: 'Số tiền vay (VND)',
                       icon: Icons.monetization_on_outlined,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [ThousandsSeparatorInputFormatter()],
                     ),
 
                     const SizedBox(height: 12),
@@ -294,10 +297,12 @@ class _InterestCalculatorViewState extends State<InterestCalculatorView> {
     required String label,
     required IconData icon,
     required TextInputType keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       onChanged: (_) => setState(() {}),
       style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 14),
       decoration: InputDecoration(

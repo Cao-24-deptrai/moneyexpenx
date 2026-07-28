@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:moneyexpenx/core/utils/interest_calculator.dart';
 
 class RepaymentModel {
   final String id;
@@ -71,14 +72,48 @@ class LoanModel {
     return payments.fold(0.0, (sum, p) => sum + p.amount);
   }
 
-  double get remainingPrincipal {
-    final rem = principal - totalPaid;
-    return rem < 0 ? 0 : rem;
+  double get interestAmount {
+    if (interestRate <= 0 || months <= 0) return 0.0;
+    if (interestType == 'compound') {
+      return InterestCalculator.calculateCompoundInterest(
+        principal: principal,
+        rateAnnual: interestRate,
+        months: months,
+      ).interestAmount;
+    } else if (interestType == 'reducing') {
+      return InterestCalculator.calculateReducingBalance(
+        principal: principal,
+        rateAnnual: interestRate,
+        months: months,
+      ).interestAmount;
+    } else {
+      return InterestCalculator.calculateSimpleInterest(
+        principal: principal,
+        rateAnnual: interestRate,
+        months: months,
+      ).interestAmount;
+    }
   }
 
+  /// Tổng tiền phải trả cả gốc lẫn lãi
+  double get totalPayable => principal + interestAmount;
+
+  /// Số tiền còn lại phải trả cả gốc lẫn lãi
+  double get remainingPayable {
+    final rem = totalPayable - totalPaid;
+    return rem < 0 ? 0.0 : rem;
+  }
+
+  /// Dư nợ gốc còn lại
+  double get remainingPrincipal {
+    final rem = principal - totalPaid;
+    return rem < 0 ? 0.0 : rem;
+  }
+
+  /// Tiến độ trả tiền (%)
   double get progressRatio {
-    if (principal <= 0) return 0.0;
-    final ratio = totalPaid / principal;
+    if (totalPayable <= 0) return 0.0;
+    final ratio = totalPaid / totalPayable;
     return ratio > 1.0 ? 1.0 : ratio;
   }
 

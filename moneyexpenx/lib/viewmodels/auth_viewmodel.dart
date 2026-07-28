@@ -8,7 +8,7 @@ import 'package:moneyexpenx/data/services/local_storage_service.dart';
 class AuthViewModel extends ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService.instance;
   UserModel? _currentUser;
-  bool _isLoading = false;
+  bool _isLoading = true;
   String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;

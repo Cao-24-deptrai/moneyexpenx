@@ -27,8 +27,8 @@ class FinanceViewModel extends ChangeNotifier {
   List<LoanModel> get activeLoans => _loans.where((l) => l.type == 'loan' && l.status == 'active').toList();
   List<LoanModel> get activeDebts => _loans.where((l) => l.type == 'debt' && l.status == 'active').toList();
 
-  double get totalLoanedAmount => activeLoans.fold(0.0, (sum, l) => sum + l.remainingPrincipal);
-  double get totalBorrowedAmount => activeDebts.fold(0.0, (sum, l) => sum + l.remainingPrincipal);
+  double get totalLoanedAmount => activeLoans.fold(0.0, (sum, l) => sum + l.remainingPayable);
+  double get totalBorrowedAmount => activeDebts.fold(0.0, (sum, l) => sum + l.remainingPayable);
 
   BudgetModel? get monthlyBudget => _monthlyBudget;
   bool get isLoading => _isLoading;
@@ -60,9 +60,23 @@ class FinanceViewModel extends ChangeNotifier {
     return _savingJars.fold(0.0, (sum, jar) => sum + jar.currentAmt);
   }
 
-  // Main balance = Incomes - Expenses - Money in Jars
+  // Total Net Borrowed Cash (Đi vay - nhận tiền về làm TĂNG số dư)
+  double get netBorrowedCash {
+    return _loans
+        .where((l) => l.type == 'debt')
+        .fold(0.0, (sum, l) => sum + (l.principal - l.totalPaid));
+  }
+
+  // Total Net Loaned Out Cash (Cho vay - bỏ tiền ra làm GIẢM số dư)
+  double get netLoanedOutCash {
+    return _loans
+        .where((l) => l.type == 'loan')
+        .fold(0.0, (sum, l) => sum + (l.principal - l.totalPaid));
+  }
+
+  // Main balance = Incomes - Expenses - Money in Jars + Net Borrowed Cash - Net Loaned Out Cash
   double get mainBalance {
-    return totalIncome - totalExpense - jarsAllocated;
+    return totalIncome - totalExpense - jarsAllocated + netBorrowedCash - netLoanedOutCash;
   }
 
   // Monthly expense (for current month budget tracking)

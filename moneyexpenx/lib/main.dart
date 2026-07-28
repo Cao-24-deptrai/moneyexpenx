@@ -51,26 +51,7 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  bool _initialized = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      _loadUserData();
-      _initialized = true;
-    }
-  }
-
-  Future<void> _loadUserData() async {
-    final authVm = Provider.of<AuthViewModel>(context, listen: false);
-    final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
-    
-    // If user is already authenticated from cache, load their finance data
-    if (authVm.isAuthenticated) {
-      await financeVm.loadData(authVm.currentUser!.uID);
-    }
-  }
+  String? _loadedUid;
 
   @override
   Widget build(BuildContext context) {
@@ -89,8 +70,17 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Direct routing based on Auth state
     if (authVm.isAuthenticated) {
+      final uid = authVm.currentUser!.uID;
+      if (_loadedUid != uid) {
+        _loadedUid = uid;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
+          financeVm.loadData(uid);
+        });
+      }
       return const DashboardScreen();
     } else {
+      _loadedUid = null;
       return const LoginScreen();
     }
   }

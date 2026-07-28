@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import 'package:moneyexpenx/data/models/loan_model.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
 import 'package:moneyexpenx/views/loans/add_loan_screen.dart';
 import 'package:moneyexpenx/views/loans/interest_calculator_view.dart';
+import 'package:moneyexpenx/core/utils/thousands_formatter.dart';
 
 class LoansScreen extends StatefulWidget {
   const LoansScreen({Key? key}) : super(key: key);
@@ -40,6 +42,7 @@ class _LoansScreenState extends State<LoansScreen> {
             TextField(
               controller: amountController,
               keyboardType: TextInputType.number,
+              inputFormatters: [ThousandsSeparatorInputFormatter()],
               style: GoogleFonts.beVietnamPro(color: Colors.white),
               decoration: InputDecoration(
                 labelText: 'Số tiền trả (VND)',
@@ -312,17 +315,36 @@ class _LoansScreenState extends State<LoansScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'Gốc: ${_currencyFormat.format(loan.principal)}',
-                                        style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 12),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Gốc: ${_currencyFormat.format(loan.principal)}',
+                                            style: GoogleFonts.beVietnamPro(color: Colors.white70, fontSize: 12),
+                                          ),
+                                          if (loan.interestRate > 0)
+                                            Text(
+                                              'Lãi: +${_currencyFormat.format(loan.interestAmount)}',
+                                              style: GoogleFonts.beVietnamPro(color: Colors.redAccent.withOpacity(0.9), fontSize: 11),
+                                            ),
+                                        ],
                                       ),
-                                      Text(
-                                        'Còn lại: ${_currencyFormat.format(loan.remainingPrincipal)}',
-                                        style: GoogleFonts.beVietnamPro(
-                                          color: isPaid ? Colors.white50 : AppTheme.primaryYellow,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            'Còn lại phải trả',
+                                            style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 10),
+                                          ),
+                                          Text(
+                                            _currencyFormat.format(loan.remainingPayable),
+                                            style: GoogleFonts.beVietnamPro(
+                                              color: isPaid ? Colors.white60 : AppTheme.primaryYellow,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -340,6 +362,71 @@ class _LoansScreenState extends State<LoansScreen> {
                                     ),
                                   ),
 
+                                  const SizedBox(height: 10),
+
+                                  // Start Date & Due Date Row
+                                  Builder(builder: (context) {
+                                    final dueDate = loan.dueDate ??
+                                        DateTime(
+                                          loan.startDate.year + ((loan.startDate.month + loan.months - 1) ~/ 12),
+                                          ((loan.startDate.month + loan.months - 1) % 12) + 1,
+                                          loan.startDate.day,
+                                        );
+                                    final isOverdue = !isPaid && DateTime.now().isAfter(dueDate);
+
+                                    return Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.event_outlined, size: 14, color: AppTheme.textSecondary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Vay: ${_dateFormat.format(loan.startDate)}',
+                                              style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 11),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.alarm,
+                                              size: 14,
+                                              color: isOverdue ? Colors.redAccent : AppTheme.primaryYellow,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'Hạn trả: ${_dateFormat.format(dueDate)}',
+                                              style: GoogleFonts.beVietnamPro(
+                                                color: isOverdue ? Colors.redAccent : AppTheme.primaryYellow,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            if (isOverdue) ...[
+                                              const SizedBox(width: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.redAccent.withOpacity(0.2),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  'QUÁ HẠN',
+                                                  style: GoogleFonts.beVietnamPro(
+                                                    color: Colors.redAccent,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 9,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    );
+                                  }),
+
                                   const SizedBox(height: 8),
 
                                   Row(
@@ -347,17 +434,25 @@ class _LoansScreenState extends State<LoansScreen> {
                                     children: [
                                       Text(
                                         'Lãi: ${loan.interestRate}% (${loan.interestType}) | ${loan.months} tháng',
-                                        style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 10),
+                                        style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 11),
                                       ),
                                       if (!isPaid)
                                         GestureDetector(
                                           onTap: () => _showAddRepaymentDialog(loan),
-                                          child: Text(
-                                            '+ Cập nhật trả tiền',
-                                            style: GoogleFonts.beVietnamPro(
-                                              color: AppTheme.primaryYellow,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 11,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.primaryYellow.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: AppTheme.primaryYellow.withOpacity(0.4)),
+                                            ),
+                                            child: Text(
+                                              '+ Trả tiền bớt',
+                                              style: GoogleFonts.beVietnamPro(
+                                                color: AppTheme.primaryYellow,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 11,
+                                              ),
                                             ),
                                           ),
                                         ),
