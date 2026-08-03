@@ -9,6 +9,7 @@ import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
 import 'package:moneyexpenx/views/loans/loans_screen.dart';
 import 'package:moneyexpenx/views/loans/interest_calculator_view.dart';
 import 'package:moneyexpenx/views/export/export_report_screen.dart';
+import 'package:moneyexpenx/views/admin/admin_dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -91,8 +92,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   final newName = _nameController.text.trim();
-                  final authVm = Provider.of<AuthViewModel>(context, listen: false);
-                  
+                  final authVm = Provider.of<AuthViewModel>(
+                    context,
+                    listen: false,
+                  );
+
                   Navigator.pop(context); // Close dialog
 
                   bool success = await authVm.updateUsername(newName);
@@ -102,10 +106,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         content: Text(
                           success
                               ? 'Cập nhật tên thành công!'
-                              : (authVm.errorMessage ?? 'Đã xảy ra lỗi khi cập nhật tên.'),
-                          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                              : (authVm.errorMessage ??
+                                    'Đã xảy ra lỗi khi cập nhật tên.'),
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        backgroundColor: success ? AppTheme.primaryYellow : AppTheme.alertRed,
+                        backgroundColor: success
+                            ? AppTheme.primaryYellow
+                            : AppTheme.alertRed,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -140,7 +150,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -162,7 +174,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           backgroundColor: success ? AppTheme.primaryYellow : AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -230,9 +244,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Tài khoản cá nhân',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -246,7 +260,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: const LinearGradient(
-                              colors: [AppTheme.primaryYellow, Colors.orangeAccent],
+                              colors: [
+                                AppTheme.primaryYellow,
+                                Colors.orangeAccent,
+                              ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
@@ -255,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: AppTheme.primaryYellow.withOpacity(0.15),
                                 blurRadius: 20,
                                 spreadRadius: 5,
-                              )
+                              ),
                             ],
                           ),
                           child: CircleAvatar(
@@ -274,7 +291,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 18),
-                        
+
                         // Username + Edit button
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -283,7 +300,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Flexible(
                               child: Text(
                                 user.username,
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 22,
                                     ),
@@ -292,7 +310,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () => _showEditNameDialog(context, user.username),
+                              onTap: () =>
+                                  _showEditNameDialog(context, user.username),
                               child: const Icon(
                                 Icons.edit_note_outlined,
                                 color: AppTheme.primaryYellow,
@@ -302,14 +321,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         const SizedBox(height: 6),
-                        
+
                         // Email display
                         Text(
-                          user.email.isNotEmpty ? user.email : 'Chưa cấu hình Email',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          user.email.isNotEmpty
+                              ? user.email
+                              : 'Chưa cấu hình Email',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
                                 color: AppTheme.textSecondary,
                                 letterSpacing: 0.2,
                               ),
+                        ),
+                        const SizedBox(height: 8),
+
+                        // Role badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: authVm.isAdmin
+                                ? AppTheme.primaryYellow.withOpacity(0.2)
+                                : Colors.blue.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: authVm.isAdmin
+                                  ? AppTheme.primaryYellow
+                                  : Colors.blue,
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                authVm.isAdmin
+                                    ? Icons.admin_panel_settings
+                                    : Icons.person,
+                                size: 14,
+                                color: authVm.isAdmin
+                                    ? AppTheme.primaryYellow
+                                    : Colors.blue,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                authVm.isAdmin
+                                    ? 'VAI TRÒ: ADMIN'
+                                    : 'VAI TRÒ: USER',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: authVm.isAdmin
+                                      ? AppTheme.primaryYellow
+                                      : Colors.blue,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -329,7 +400,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // 3 Stats columns inside a GlassContainer
                   GlassContainer(
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 16,
+                    ),
                     width: double.infinity,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -372,6 +446,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   Column(
                     children: [
+                      if (authVm.isAdmin) ...[
+                        _buildMenuCard(
+                          context,
+                          title: 'Trang Quản Trị Admin Panel',
+                          subtitle:
+                              'Quản lý tài khoản & xem thống kê toàn hệ thống',
+                          icon: Icons.admin_panel_settings_outlined,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AdminDashboardScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                       _buildMenuCard(
                         context,
                         title: 'Khoản Vay & Nợ',
@@ -380,7 +472,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const LoansScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const LoansScreen(),
+                            ),
                           );
                         },
                       ),
@@ -393,7 +487,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const InterestCalculatorView()),
+                            MaterialPageRoute(
+                              builder: (_) => const InterestCalculatorView(),
+                            ),
                           );
                         },
                       ),
@@ -401,12 +497,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _buildMenuCard(
                         context,
                         title: 'Xuất Báo Cáo Excel / PDF',
-                        subtitle: 'Xuất lịch sử thu chi & dư nợ ra file Excel/CSV/PDF',
+                        subtitle:
+                            'Xuất lịch sử thu chi & dư nợ ra file Excel/CSV/PDF',
                         icon: Icons.file_download_outlined,
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const ExportReportScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const ExportReportScreen(),
+                            ),
                           );
                         },
                       ),
@@ -434,7 +533,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: 'Đổi tên hiển thị',
                         subtitle: 'Cập nhật tên tài khoản của bạn',
                         icon: Icons.person_outline_outlined,
-                        onTap: () => _showEditNameDialog(context, user.username),
+                        onTap: () =>
+                            _showEditNameDialog(context, user.username),
                       ),
                       const SizedBox(height: 12),
                       _buildMenuCard(
@@ -456,11 +556,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             SnackBar(
                               content: const Text(
                                 'Ứng dụng Quản lý chi tiêu thông minh v1.0.0',
-                                style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               backgroundColor: AppTheme.primaryYellow,
                               behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           );
                         },
@@ -480,16 +585,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             backgroundColor: AppTheme.cardBg,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                              side: BorderSide(
+                                color: Colors.white.withOpacity(0.08),
+                              ),
                             ),
                             title: const Text('Đăng xuất'),
-                            content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
+                            content: const Text(
+                              'Bạn có chắc chắn muốn đăng xuất không?',
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
                                 child: Text(
                                   'Hủy',
-                                  style: TextStyle(color: AppTheme.textSecondary),
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                  ),
                                 ),
                               ),
                               ElevatedButton(
@@ -563,11 +674,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: AppTheme.primaryYellow,
-          size: 24,
-        ),
+        Icon(icon, color: AppTheme.primaryYellow, size: 24),
         const SizedBox(height: 8),
         Text(
           value,
@@ -581,9 +688,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
+            fontSize: 12,
+            color: AppTheme.textSecondary,
+          ),
         ),
       ],
     );
@@ -610,11 +717,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: BoxShape.circle,
                   color: Colors.white.withOpacity(0.03),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppTheme.primaryYellow,
-                  size: 22,
-                ),
+                child: Icon(icon, color: AppTheme.primaryYellow, size: 22),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -633,9 +736,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary,
-                          ),
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                      ),
                     ),
                   ],
                 ),

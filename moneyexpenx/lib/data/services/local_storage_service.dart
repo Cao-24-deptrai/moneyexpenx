@@ -16,10 +16,6 @@ class LocalStorageService {
     await _prefs?.setString('cached_uid', uid);
   }
 
-  static Future<void> clearCachedUserId() async {
-    await _prefs?.remove('cached_uid');
-  }
-
   // Cache user details
   static String? getCachedUsername() {
     return _prefs?.getString('cached_username');
@@ -27,6 +23,20 @@ class LocalStorageService {
 
   static Future<void> cacheUsername(String name) async {
     await _prefs?.setString('cached_username', name);
+  }
+
+  static String? getCachedUserRole() {
+    return _prefs?.getString('cached_role');
+  }
+
+  static Future<void> cacheUserRole(String role) async {
+    await _prefs?.setString('cached_role', role);
+  }
+
+  static Future<void> clearCachedUserId() async {
+    await _prefs?.remove('cached_uid');
+    await _prefs?.remove('cached_username');
+    await _prefs?.remove('cached_role');
   }
 
   // UI preferences

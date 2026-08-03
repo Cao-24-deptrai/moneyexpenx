@@ -7,6 +7,7 @@ import 'package:moneyexpenx/viewmodels/auth_viewmodel.dart';
 import 'package:moneyexpenx/viewmodels/finance_viewmodel.dart';
 import 'package:moneyexpenx/views/auth/login_screen.dart';
 import 'package:moneyexpenx/views/dashboard/dashboard_screen.dart';
+import 'package:moneyexpenx/views/admin/admin_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,6 +78,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
           final financeVm = Provider.of<FinanceViewModel>(context, listen: false);
           financeVm.loadData(uid);
         });
+      }
+
+      if (authVm.isAdmin) {
+        return const AdminDashboardScreen();
       }
       return const DashboardScreen();
     } else {

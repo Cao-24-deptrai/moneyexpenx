@@ -36,28 +36,34 @@ class FirebaseService {
   // AUTHENTICATION SERVICES
   // ==========================================
 
-  Future<UserModel?> signUp(String username, String email, String password) async {
+  Future<UserModel?> signUp(
+    String username,
+    String email,
+    String password,
+  ) async {
     try {
-      UserCredential credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
       if (credential.user != null) {
         String uid = credential.user!.uid;
+        bool isAdminEmail = email.trim().toLowerCase() == 'rocon@gmail.com';
         UserModel newUser = UserModel(
           uID: uid,
           username: username,
           email: email,
           createdAt: DateTime.now(),
+          role: isAdminEmail ? 'admin' : 'user',
         );
-        
+
         // Use a Firestore Batch to create both the user doc and default categories atomically
         final batch = FirebaseFirestore.instance.batch();
-        
+
         // 1. Create user document
-        final userDocRef = FirebaseFirestore.instance.collection('users').doc(uid);
+        final userDocRef = FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid);
         batch.set(userDocRef, newUser.toMap());
-        
+
         // 2. Define and seed default categories
         final defaultCategories = [
           {'name': 'Lương', 'type': 'Thu', 'iconKey': 'work'},
@@ -66,14 +72,20 @@ class FirebaseService {
           {'name': 'Di chuyển', 'type': 'Chi', 'iconKey': 'directions_car'},
           {'name': 'Mua sắm', 'type': 'Chi', 'iconKey': 'shopping_bag'},
           {'name': 'Giải trí', 'type': 'Chi', 'iconKey': 'sports_esports'},
-          {'name': 'Y tế & Sức khỏe', 'type': 'Chi', 'iconKey': 'medical_services'},
+          {
+            'name': 'Y tế & Sức khỏe',
+            'type': 'Chi',
+            'iconKey': 'medical_services',
+          },
           {'name': 'Giáo dục', 'type': 'Chi', 'iconKey': 'school'},
           {'name': 'Nhà cửa', 'type': 'Chi', 'iconKey': 'home'},
           {'name': 'Cà phê', 'type': 'Chi', 'iconKey': 'coffee'},
         ];
-        
+
         for (var cat in defaultCategories) {
-          final catDocRef = FirebaseFirestore.instance.collection('categories').doc();
+          final catDocRef = FirebaseFirestore.instance
+              .collection('categories')
+              .doc();
           final categoryModel = CategoryModel(
             ctgID: catDocRef.id,
             uID: uid,
@@ -83,10 +95,10 @@ class FirebaseService {
           );
           batch.set(catDocRef, categoryModel.toMap());
         }
-        
+
         // Commit all writes
         await batch.commit();
-        
+
         return newUser;
       }
     } catch (e) {
@@ -98,15 +110,27 @@ class FirebaseService {
 
   Future<UserModel?> signIn(String email, String password) async {
     try {
-      UserCredential credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential credential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
       if (credential.user != null) {
         String uid = credential.user!.uid;
-        DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        bool isAdminEmail = email.trim().toLowerCase() == 'rocon@gmail.com';
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
         if (doc.exists) {
-          return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+          UserModel user = UserModel.fromMap(
+            doc.data() as Map<String, dynamic>,
+          );
+          if (isAdminEmail && user.role != 'admin') {
+            user = user.copyWith(role: 'admin');
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(uid)
+                .update({'role': 'admin'});
+          }
+          return user;
         } else {
           // Fallback if user doc was not created, create a default one to prevent crash
           UserModel fallbackUser = UserModel(
@@ -114,8 +138,12 @@ class FirebaseService {
             username: credential.user!.displayName ?? email.split('@').first,
             email: email,
             createdAt: DateTime.now(),
+            role: isAdminEmail ? 'admin' : 'user',
           );
-          await FirebaseFirestore.instance.collection('users').doc(uid).set(fallbackUser.toMap());
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .set(fallbackUser.toMap());
           return fallbackUser;
         }
       }
@@ -148,9 +176,11 @@ class FirebaseService {
           .limit(1)
           .get();
       if (snap.docs.isNotEmpty) {
-        return UserModel.fromMap(snap.docs.first.data() as Map<String, dynamic>);
+        return UserModel.fromMap(
+          snap.docs.first.data() as Map<String, dynamic>,
+        );
       }
-      
+
       // Fallback lookup with lowercased email
       QuerySnapshot snapLower = await FirebaseFirestore.instance
           .collection('users')
@@ -158,7 +188,9 @@ class FirebaseService {
           .limit(1)
           .get();
       if (snapLower.docs.isNotEmpty) {
-        return UserModel.fromMap(snapLower.docs.first.data() as Map<String, dynamic>);
+        return UserModel.fromMap(
+          snapLower.docs.first.data() as Map<String, dynamic>,
+        );
       }
     } catch (e) {
       debugPrint("Error fetching user by email: $e");
@@ -171,7 +203,10 @@ class FirebaseService {
       return _userCache[uid];
     }
     try {
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
       if (doc.exists) {
         final user = UserModel.fromMap(doc.data() as Map<String, dynamic>);
         _userCache[uid] = user;
@@ -205,7 +240,11 @@ class FirebaseService {
           .collection('categories')
           .where('uID', isEqualTo: uID)
           .get();
-      return snap.docs.map((doc) => CategoryModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      return snap.docs
+          .map(
+            (doc) => CategoryModel.fromMap(doc.data() as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
       debugPrint("Error fetching categories: $e");
       return [];
@@ -215,16 +254,25 @@ class FirebaseService {
   Future<CategoryModel> addCategory(CategoryModel category) async {
     String id = _uuid.v4();
     CategoryModel newCat = category.copyWith(ctgID: id);
-    await FirebaseFirestore.instance.collection('categories').doc(id).set(newCat.toMap());
+    await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(id)
+        .set(newCat.toMap());
     return newCat;
   }
 
   Future<void> updateCategory(CategoryModel category) async {
-    await FirebaseFirestore.instance.collection('categories').doc(category.ctgID).update(category.toMap());
+    await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(category.ctgID)
+        .update(category.toMap());
   }
 
   Future<void> deleteCategory(String ctgID) async {
-    await FirebaseFirestore.instance.collection('categories').doc(ctgID).delete();
+    await FirebaseFirestore.instance
+        .collection('categories')
+        .doc(ctgID)
+        .delete();
   }
 
   // ==========================================
@@ -238,7 +286,12 @@ class FirebaseService {
           .where('uID', isEqualTo: uID)
           .orderBy('ts_date', descending: true)
           .get();
-      return snap.docs.map((doc) => TransactionModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      return snap.docs
+          .map(
+            (doc) =>
+                TransactionModel.fromMap(doc.data() as Map<String, dynamic>),
+          )
+          .toList();
     } catch (e) {
       debugPrint("Error fetching transactions: $e");
       return [];
@@ -248,12 +301,18 @@ class FirebaseService {
   Future<TransactionModel> addTransaction(TransactionModel transaction) async {
     String id = _uuid.v4();
     TransactionModel newTx = transaction.copyWith(tsID: id);
-    await FirebaseFirestore.instance.collection('transactions').doc(id).set(newTx.toMap());
+    await FirebaseFirestore.instance
+        .collection('transactions')
+        .doc(id)
+        .set(newTx.toMap());
     return newTx;
   }
 
   Future<void> deleteTransaction(String tsID) async {
-    await FirebaseFirestore.instance.collection('transactions').doc(tsID).delete();
+    await FirebaseFirestore.instance
+        .collection('transactions')
+        .doc(tsID)
+        .delete();
   }
 
   // ==========================================
@@ -294,16 +353,25 @@ class FirebaseService {
   Future<SavingJarModel> addSavingJar(SavingJarModel jar) async {
     String id = _uuid.v4();
     SavingJarModel newJar = jar.copyWith(jarID: id);
-    await FirebaseFirestore.instance.collection('saving_jars').doc(id).set(newJar.toMap());
+    await FirebaseFirestore.instance
+        .collection('saving_jars')
+        .doc(id)
+        .set(newJar.toMap());
     return newJar;
   }
 
   Future<void> updateSavingJar(SavingJarModel jar) async {
-    await FirebaseFirestore.instance.collection('saving_jars').doc(jar.jarID).update(jar.toMap());
+    await FirebaseFirestore.instance
+        .collection('saving_jars')
+        .doc(jar.jarID)
+        .update(jar.toMap());
   }
 
   Future<void> deleteSavingJar(String jarID) async {
-    await FirebaseFirestore.instance.collection('saving_jars').doc(jarID).delete();
+    await FirebaseFirestore.instance
+        .collection('saving_jars')
+        .doc(jarID)
+        .delete();
   }
 
   // ==========================================
@@ -313,18 +381,27 @@ class FirebaseService {
   Future<BudgetModel?> getBudget(String uID, DateTime date) async {
     try {
       DateTime startOfMonth = DateTime(date.year, date.month, 1);
-      DateTime endOfMonth = DateTime(date.year, date.month + 1, 1).subtract(const Duration(seconds: 1));
+      DateTime endOfMonth = DateTime(
+        date.year,
+        date.month + 1,
+        1,
+      ).subtract(const Duration(seconds: 1));
 
       QuerySnapshot snap = await FirebaseFirestore.instance
           .collection('budgets')
           .where('uID', isEqualTo: uID)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
+          .where(
+            'date',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth),
+          )
           .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfMonth))
           .limit(1)
           .get();
 
       if (snap.docs.isNotEmpty) {
-        return BudgetModel.fromMap(snap.docs.first.data() as Map<String, dynamic>);
+        return BudgetModel.fromMap(
+          snap.docs.first.data() as Map<String, dynamic>,
+        );
       }
     } catch (e) {
       debugPrint("Error fetching budget: $e");
@@ -335,7 +412,10 @@ class FirebaseService {
   Future<BudgetModel> setBudget(BudgetModel budget) async {
     String id = budget.bgID.isEmpty ? _uuid.v4() : budget.bgID;
     BudgetModel newBudget = budget.copyWith(bgID: id);
-    await FirebaseFirestore.instance.collection('budgets').doc(id).set(newBudget.toMap());
+    await FirebaseFirestore.instance
+        .collection('budgets')
+        .doc(id)
+        .set(newBudget.toMap());
     return newBudget;
   }
 
@@ -349,7 +429,9 @@ class FirebaseService {
           .collection('loans')
           .where('uID', isEqualTo: uID)
           .get();
-      final loans = snap.docs.map((doc) => LoanModel.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      final loans = snap.docs
+          .map((doc) => LoanModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
       loans.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return loans;
     } catch (e) {
@@ -361,15 +443,146 @@ class FirebaseService {
   Future<LoanModel> addLoan(LoanModel loan) async {
     String id = _uuid.v4();
     LoanModel newLoan = loan.copyWith(loanID: id);
-    await FirebaseFirestore.instance.collection('loans').doc(id).set(newLoan.toMap());
+    await FirebaseFirestore.instance
+        .collection('loans')
+        .doc(id)
+        .set(newLoan.toMap());
     return newLoan;
   }
 
   Future<void> updateLoan(LoanModel loan) async {
-    await FirebaseFirestore.instance.collection('loans').doc(loan.loanID).update(loan.toMap());
+    await FirebaseFirestore.instance
+        .collection('loans')
+        .doc(loan.loanID)
+        .update(loan.toMap());
   }
 
   Future<void> deleteLoan(String loanID) async {
     await FirebaseFirestore.instance.collection('loans').doc(loanID).delete();
+  }
+
+  // ==========================================
+  // ADMIN SERVICES
+  // ==========================================
+
+  Future<List<UserModel>> getAllUsers() async {
+    try {
+      QuerySnapshot snap = await FirebaseFirestore.instance
+          .collection('users')
+          .get();
+      final users = snap.docs
+          .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+      users.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return users;
+    } catch (e) {
+      debugPrint("Error fetching all users: $e");
+      return [];
+    }
+  }
+
+  Future<void> updateUserRole(String targetUid, String newRole) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid)
+          .update({'role': newRole});
+      _userCache.remove(targetUid);
+    } catch (e) {
+      debugPrint("Error updating user role: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> deleteUser(String targetUid) async {
+    try {
+      // 1. Delete user document from 'users'
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid)
+          .delete();
+
+      // 2. Clean up user's categories
+      final categoriesSnap = await FirebaseFirestore.instance
+          .collection('categories')
+          .where('uID', isEqualTo: targetUid)
+          .get();
+      for (var doc in categoriesSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 3. Clean up user's transactions
+      final txSnap = await FirebaseFirestore.instance
+          .collection('transactions')
+          .where('uID', isEqualTo: targetUid)
+          .get();
+      for (var doc in txSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 4. Clean up user's saving jars
+      final jarsSnap = await FirebaseFirestore.instance
+          .collection('saving_jars')
+          .where('uID', isEqualTo: targetUid)
+          .get();
+      for (var doc in jarsSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 5. Clean up user's budgets
+      final budgetsSnap = await FirebaseFirestore.instance
+          .collection('budgets')
+          .where('uID', isEqualTo: targetUid)
+          .get();
+      for (var doc in budgetsSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      // 6. Clean up user's loans
+      final loansSnap = await FirebaseFirestore.instance
+          .collection('loans')
+          .where('uID', isEqualTo: targetUid)
+          .get();
+      for (var doc in loansSnap.docs) {
+        await doc.reference.delete();
+      }
+
+      _userCache.remove(targetUid);
+    } catch (e) {
+      debugPrint("Error deleting user and associated data: $e");
+      rethrow;
+    }
+  }
+
+  Future<Map<String, int>> getSystemStats() async {
+    try {
+      final usersSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .get();
+      final txSnap = await FirebaseFirestore.instance
+          .collection('transactions')
+          .get();
+      final jarsSnap = await FirebaseFirestore.instance
+          .collection('saving_jars')
+          .get();
+      final loansSnap = await FirebaseFirestore.instance
+          .collection('loans')
+          .get();
+
+      return {
+        'totalUsers': usersSnap.docs.length,
+        'totalTransactions': txSnap.docs.length,
+        'totalJars': jarsSnap.docs.length,
+        'totalLoans': loansSnap.docs.length,
+      };
+    } catch (e) {
+      debugPrint("Error fetching system stats: $e");
+      return {
+        'totalUsers': 0,
+        'totalTransactions': 0,
+        'totalJars': 0,
+        'totalLoans': 0,
+      };
+    }
   }
 }

@@ -15,6 +15,7 @@ class AuthViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
+  bool get isAdmin => _currentUser?.isAdmin ?? false;
 
   AuthViewModel() {
     _loadSessionFromCache();
@@ -26,6 +27,7 @@ class AuthViewModel extends ChangeNotifier {
 
     String? cachedUid = LocalStorageService.getCachedUserId();
     String? cachedUsername = LocalStorageService.getCachedUsername();
+    String? cachedRole = LocalStorageService.getCachedUserRole();
 
     if (cachedUid != null) {
       // Create session from cache for immediate UI responsiveness
@@ -34,7 +36,17 @@ class AuthViewModel extends ChangeNotifier {
         username: cachedUsername ?? 'User',
         email: '',
         createdAt: DateTime.now(),
+        role: cachedRole ?? 'user',
       );
+
+      // Refresh full profile in background from Firestore to get latest role
+      _firebaseService.getUserByID(cachedUid).then((user) {
+        if (user != null) {
+          _currentUser = user;
+          LocalStorageService.cacheUserRole(user.role);
+          notifyListeners();
+        }
+      });
     }
 
     _isLoading = false;
@@ -52,6 +64,7 @@ class AuthViewModel extends ChangeNotifier {
         _currentUser = user;
         await LocalStorageService.cacheUserId(user.uID);
         await LocalStorageService.cacheUsername(user.username);
+        await LocalStorageService.cacheUserRole(user.role);
         _isLoading = false;
         notifyListeners();
         return true;
@@ -69,12 +82,14 @@ class AuthViewModel extends ChangeNotifier {
       } else if (e.code == 'user-disabled') {
         _errorMessage = "Tài khoản này đã bị vô hiệu hóa.";
       } else if (e.code == 'operation-not-allowed') {
-        _errorMessage = "Đăng nhập bằng Email/Password chưa được bật trên Firebase Console.";
+        _errorMessage =
+            "Đăng nhập bằng Email/Password chưa được bật trên Firebase Console.";
       }
     } on FirebaseException catch (e) {
       _errorMessage = e.message ?? "Lỗi cơ sở dữ liệu Firebase.";
       if (e.code == 'permission-denied') {
-        _errorMessage = "Quyền truy cập bị từ chối. Vui lòng kiểm tra Firestore Rules.";
+        _errorMessage =
+            "Quyền truy cập bị từ chối. Vui lòng kiểm tra Firestore Rules.";
       }
     } catch (e) {
       _errorMessage = e.toString();
@@ -91,11 +106,16 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      UserModel? user = await _firebaseService.signUp(username, email, password);
+      UserModel? user = await _firebaseService.signUp(
+        username,
+        email,
+        password,
+      );
       if (user != null) {
         _currentUser = user;
         await LocalStorageService.cacheUserId(user.uID);
         await LocalStorageService.cacheUsername(user.username);
+        await LocalStorageService.cacheUserRole(user.role);
         _isLoading = false;
         notifyListeners();
         return true;
@@ -111,12 +131,14 @@ class AuthViewModel extends ChangeNotifier {
       } else if (e.code == 'weak-password') {
         _errorMessage = "Mật khẩu quá yếu (tối thiểu 6 ký tự).";
       } else if (e.code == 'operation-not-allowed') {
-        _errorMessage = "Đăng ký bằng Email/Password chưa được bật trên Firebase Console.";
+        _errorMessage =
+            "Đăng ký bằng Email/Password chưa được bật trên Firebase Console.";
       }
     } on FirebaseException catch (e) {
       _errorMessage = e.message ?? "Lỗi cơ sở dữ liệu Firebase.";
       if (e.code == 'permission-denied') {
-        _errorMessage = "Quyền truy cập bị từ chối. Vui lòng kiểm tra Firestore Rules.";
+        _errorMessage =
+            "Quyền truy cập bị từ chối. Vui lòng kiểm tra Firestore Rules.";
       }
     } catch (e) {
       _errorMessage = e.toString();
@@ -149,7 +171,8 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
-      _errorMessage = e.message ?? "Đã xảy ra lỗi khi gửi yêu cầu khôi phục mật khẩu.";
+      _errorMessage =
+          e.message ?? "Đã xảy ra lỗi khi gửi yêu cầu khôi phục mật khẩu.";
       if (e.code == 'user-not-found') {
         _errorMessage = "Không tìm thấy tài khoản với email này.";
       } else if (e.code == 'invalid-email') {
@@ -171,7 +194,10 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _firebaseService.updateUsername(_currentUser!.uID, newUsername.trim());
+      await _firebaseService.updateUsername(
+        _currentUser!.uID,
+        newUsername.trim(),
+      );
       _currentUser = UserModel(
         uID: _currentUser!.uID,
         username: newUsername.trim(),
@@ -188,5 +214,41 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  // ==========================================
+  // ADMIN MANAGEMENT METHODS
+  // ==========================================
+
+  Future<List<UserModel>> fetchAllUsers() async {
+    return await _firebaseService.getAllUsers();
+  }
+
+  Future<bool> updateUserRole(String targetUid, String newRole) async {
+    try {
+      await _firebaseService.updateUserRole(targetUid, newRole);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = "Không thể cập nhật quyền: ${e.toString()}";
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteUser(String targetUid) async {
+    try {
+      await _firebaseService.deleteUser(targetUid);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = "Không thể xóa người dùng: ${e.toString()}";
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<Map<String, int>> fetchSystemStats() async {
+    return await _firebaseService.getSystemStats();
   }
 }
