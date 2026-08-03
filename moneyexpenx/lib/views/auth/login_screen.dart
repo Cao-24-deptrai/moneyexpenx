@@ -171,27 +171,28 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
     bool success = await authVm.sendPasswordReset(email);
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Đã gửi liên kết khôi phục mật khẩu đến email của bạn.",
-            style: GoogleFonts.beVietnamPro(color: Colors.white),
-          ),
-          backgroundColor: AppTheme.successGreen,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-        ),
-      );
-      _changeMode(AuthMode.login);
+      // Bật Pop-up Dialog hiển thị "Đã gửi liên kết khôi phục, vui lòng kiểm tra <email>" + nhập OTP & mật khẩu mới
+      await _showOtpResetDialog(email);
     } else if (mounted) {
+      final errMsg = authVm.errorMessage ?? "Có lỗi xảy ra khi gửi email khôi phục.";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            authVm.errorMessage ?? "Có lỗi xảy ra. Vui lòng thử lại sau.",
+            errMsg,
             style: GoogleFonts.beVietnamPro(color: Colors.white),
           ),
           backgroundColor: AppTheme.alertRed,
           behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+          action: errMsg.contains("chưa được đăng ký")
+              ? SnackBarAction(
+                  label: "ĐĂNG KÝ MỚI",
+                  textColor: AppTheme.primaryYellow,
+                  onPressed: () {
+                    _changeMode(AuthMode.signUp);
+                  },
+                )
+              : null,
         ),
       );
     }
@@ -644,4 +645,262 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
       ),
     );
   }
+
+  Future<void> _showOtpResetDialog(String email) async {
+    final otpController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+    bool isSubmitting = false;
+    String? dialogError;
+
+    final authVm = Provider.of<AuthViewModel>(context, listen: false);
+    final String? generatedOtp = authVm.generatedOtp;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E2430),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: AppTheme.primaryYellow.withOpacity(0.3)),
+              ),
+              title: Row(
+                children: [
+                  const Icon(Icons.mark_email_read_outlined, color: AppTheme.primaryYellow, size: 28),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "Đã gửi liên kết khôi phục",
+                      style: GoogleFonts.beVietnamPro(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryYellow.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.primaryYellow.withOpacity(0.25)),
+                      ),
+                      child: Text(
+                        "Đã gửi liên kết khôi phục, vui lòng kiểm tra $email",
+                        style: GoogleFonts.beVietnamPro(
+                          color: AppTheme.primaryYellow,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Vui lòng kiểm tra hộp thư email và nhập mã xác thực OTP bên dưới để tiến hành đặt mật khẩu mới:",
+                      style: GoogleFonts.beVietnamPro(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (generatedOtp != null) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.successGreen.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          "Mã OTP thử nghiệm của bạn: $generatedOtp",
+                          style: GoogleFonts.beVietnamPro(
+                            color: AppTheme.successGreen,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Mã OTP (6 chữ số)',
+                        labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 13),
+                        prefixIcon: const Icon(Icons.pin_outlined, color: AppTheme.primaryYellow, size: 20),
+                        filled: true,
+                        fillColor: Colors.black.withOpacity(0.3),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.primaryYellow),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: newPasswordController,
+                      obscureText: obscureNew,
+                      style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Mật khẩu mới',
+                        labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 13),
+                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryYellow, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureNew ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            color: AppTheme.textSecondary,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            setStateDialog(() => obscureNew = !obscureNew);
+                          },
+                        ),
+                        filled: true,
+                        fillColor: Colors.black.withOpacity(0.3),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.primaryYellow),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: confirmPasswordController,
+                      obscureText: obscureConfirm,
+                      style: GoogleFonts.beVietnamPro(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        labelText: 'Xác nhận mật khẩu mới',
+                        labelStyle: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary, fontSize: 13),
+                        prefixIcon: const Icon(Icons.lock_reset_outlined, color: AppTheme.primaryYellow, size: 20),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            color: AppTheme.textSecondary,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            setStateDialog(() => obscureConfirm = !obscureConfirm);
+                          },
+                        ),
+                        filled: true,
+                        fillColor: Colors.black.withOpacity(0.3),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppTheme.primaryYellow),
+                        ),
+                      ),
+                    ),
+                    if (dialogError != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        dialogError!,
+                        style: GoogleFonts.beVietnamPro(color: AppTheme.alertRed, fontSize: 12),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+                  child: Text(
+                    "Hủy",
+                    style: GoogleFonts.beVietnamPro(color: AppTheme.textSecondary),
+                  ),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryYellow,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final otp = otpController.text.trim();
+                          final newPass = newPasswordController.text.trim();
+                          final confirmPass = confirmPasswordController.text.trim();
+
+                          if (otp.isEmpty || newPass.isEmpty || confirmPass.isEmpty) {
+                            setStateDialog(() => dialogError = "Vui lòng điền đầy đủ thông tin.");
+                            return;
+                          }
+
+                          if (newPass != confirmPass) {
+                            setStateDialog(() => dialogError = "Mật khẩu xác nhận không khớp.");
+                            return;
+                          }
+
+                          if (newPass.length < 6) {
+                            setStateDialog(() => dialogError = "Mật khẩu mới phải có ít nhất 6 ký tự.");
+                            return;
+                          }
+
+                          setStateDialog(() {
+                            isSubmitting = true;
+                            dialogError = null;
+                          });
+
+                          bool ok = await authVm.resetPasswordWithOtp(email, otp, newPass);
+
+                          if (ok && mounted) {
+                            Navigator.pop(dialogContext);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới.",
+                                  style: GoogleFonts.beVietnamPro(color: Colors.white),
+                                ),
+                                backgroundColor: AppTheme.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 4),
+                              ),
+                            );
+                            _changeMode(AuthMode.login);
+                          } else {
+                            setStateDialog(() {
+                              isSubmitting = false;
+                              dialogError = authVm.errorMessage ?? "Mã OTP không chính xác hoặc có lỗi xảy ra.";
+                            });
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                        )
+                      : Text(
+                          "Đặt mật khẩu mới",
+                          style: GoogleFonts.beVietnamPro(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
 }

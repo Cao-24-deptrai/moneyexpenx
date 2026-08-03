@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart' hide FirebaseService;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,7 +10,12 @@ class AuthViewModel extends ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService.instance;
   UserModel? _currentUser;
   bool _isLoading = true;
+  bool _isInitialLoading = true;
+  bool get isInitialLoading => _isInitialLoading;
   String? _errorMessage;
+  String? _generatedOtp;
+
+  String? get generatedOtp => _generatedOtp;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -22,6 +28,7 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadSessionFromCache() async {
+    _isInitialLoading = true;
     _isLoading = true;
     notifyListeners();
 
@@ -50,6 +57,7 @@ class AuthViewModel extends ChangeNotifier {
     }
 
     _isLoading = false;
+    _isInitialLoading = false;
     notifyListeners();
   }
 
@@ -166,20 +174,28 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _firebaseService.sendPasswordResetEmail(email.trim());
+      final cleanEmail = email.trim();
+      final random = math.Random();
+      _generatedOtp = (100000 + random.nextInt(900000)).toString();
+
+      await _firebaseService.sendPasswordResetEmail(cleanEmail);
       _isLoading = false;
       notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
-      _errorMessage =
-          e.message ?? "Đã xảy ra lỗi khi gửi yêu cầu khôi phục mật khẩu.";
+      debugPrint("Firebase Reset Password Error Code: ${e.code}, Message: ${e.message}");
       if (e.code == 'user-not-found') {
-        _errorMessage = "Không tìm thấy tài khoản với email này.";
+        _errorMessage = "Email này chưa được đăng ký (hoặc đã bị xóa trên Firebase). Vui lòng kiểm tra lại hoặc Đăng ký mới.";
       } else if (e.code == 'invalid-email') {
         _errorMessage = "Địa chỉ email không hợp lệ.";
+      } else if (e.code == 'too-many-requests') {
+        _errorMessage = "Bạn đã gửi quá nhiều yêu cầu. Vui lòng đợi vài phút rồi thử lại.";
+      } else {
+        _errorMessage = e.message ?? "Đã xảy ra lỗi xác thực khi gửi email khôi phục.";
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      debugPrint("Generic Reset Password Error: $e");
+      _errorMessage = "Không thể gửi email khôi phục: $e";
     }
 
     _isLoading = false;
@@ -251,4 +267,45 @@ class AuthViewModel extends ChangeNotifier {
   Future<Map<String, int>> fetchSystemStats() async {
     return await _firebaseService.getSystemStats();
   }
+
+  Future<bool> resetPasswordWithOtp(String email, String otpCode, String newPassword) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final cleanEmail = email.trim();
+      final cleanOtp = otpCode.trim();
+      final cleanPass = newPassword.trim();
+
+      if (_generatedOtp != null && cleanOtp != _generatedOtp) {
+        _errorMessage = "Mã OTP không chính xác. Vui lòng kiểm tra lại.";
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      if (cleanPass.length < 6) {
+        _errorMessage = "Mật khẩu mới phải có ít nhất 6 ký tự.";
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      await _firebaseService.resetPasswordWithNewPassword(cleanEmail, cleanPass);
+      _generatedOtp = null;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = e.message ?? "Không thể đặt lại mật khẩu.";
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
 }

@@ -227,25 +227,35 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             ),
                           ),
                         )
-                      : SizedBox(
-                          height: 90,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: filteredCategories.length,
-                            itemBuilder: (context, index) {
-                              final cat = filteredCategories[index];
-                              final isSelected = _selectedCategory?.ctgID == cat.ctgID;
-                              return GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedCategory = cat;
-                                  });
-                                },
-                                child: Container(
-                                  width: 80,
-                                  margin: const EdgeInsets.only(right: 12),
+                      : Container(
+                          constraints: const BoxConstraints(
+                            maxHeight: 210,
+                          ),
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              physics: const BouncingScrollPhysics(),
+                              scrollDirection: Axis.vertical,
+                              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 10,
+                                childAspectRatio: 0.85,
+                              ),
+                              itemCount: filteredCategories.length,
+                              itemBuilder: (context, index) {
+                                final cat = filteredCategories[index];
+                                final isSelected = _selectedCategory?.ctgID == cat.ctgID;
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedCategory = cat;
+                                    });
+                                  },
                                   child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       AnimatedContainer(
                                         duration: const Duration(milliseconds: 200),
@@ -276,12 +286,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
                                       )
                                     ],
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
                   const SizedBox(height: 24),

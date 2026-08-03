@@ -1,3 +1,4 @@
+import 'package:moneyexpenx/views/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:moneyexpenx/core/theme/app_theme.dart';
@@ -58,15 +59,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Widget build(BuildContext context) {
     final authVm = Provider.of<AuthViewModel>(context);
 
-    // Show loading spinner if auth VM is booting
-    if (authVm.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(AppTheme.primaryYellow),
-          ),
-        ),
-      );
+    // Show glowing brand SplashScreen during initial app boot
+    if (authVm.isInitialLoading) {
+      return const SplashScreen();
     }
 
     // Direct routing based on Auth state

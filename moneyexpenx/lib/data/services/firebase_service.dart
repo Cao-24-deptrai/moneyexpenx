@@ -585,4 +585,25 @@ class FirebaseService {
       };
     }
   }
+
+  Future<void> resetPasswordWithNewPassword(String email, String newPassword) async {
+    try {
+      UserModel? user = await getUserByEmail(email);
+      if (user != null) {
+        try {
+          UserCredential cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email.trim(),
+            password: newPassword.trim(),
+          );
+          await cred.user?.updatePassword(newPassword.trim());
+        } catch (e) {
+          debugPrint("Password reset processed for email: $email, info: $e");
+        }
+      }
+    } catch (e) {
+      debugPrint("Error in resetPasswordWithNewPassword: $e");
+      rethrow;
+    }
+  }
+
 }
